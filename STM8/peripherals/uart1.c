@@ -95,6 +95,16 @@ void uart1_txCallback(void* dummy) {
 }
 
 void uart1_rxCallback(void* dummy) {
+	double speed;
+
+	//Recalculate timing interval again, in case our master clock source or prescaler has changed
+	speed = (double)clocksperloop * 100;
+	if (uart1_div > 0) {
+		uart1_baud = speed / (double)uart1_div;
+		timing_updateIntervalFreq(uart1_txTimer, uart1_baud / 10.0);
+		timing_updateIntervalFreq(uart1_rxTimer, uart1_baud / 10.0);
+	}
+
 	if (uart1_rxRead == uart1_rxWrite) return; //nothing new in the buffer
 
 	IO[regaddr[UART1_DR] - io_start] = uart1_rxBufGet();
