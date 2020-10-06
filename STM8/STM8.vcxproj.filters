@@ -1,0 +1,171 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\devices">
+      <UniqueIdentifier>{98dfb924-94a4-43d6-b38e-f27364fdf2df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\hardware">
+      <UniqueIdentifier>{4c748966-6cc6-4a4c-9431-a238a7aebbb4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\hardware">
+      <UniqueIdentifier>{bedd5674-3c25-4b6e-97e4-8ccec6fa18a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\products">
+      <UniqueIdentifier>{f57dd382-1519-4b19-9be7-728111a974c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\products">
+      <UniqueIdentifier>{df404310-b46d-41e1-b518-dfb430ea78ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\peripherals">
+      <UniqueIdentifier>{55d21ef8-58ca-4b88-9e43-d24a1581997a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\peripherals">
+      <UniqueIdentifier>{f04a6e11-dad9-4158-af00-4904a51d9a9b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\devices">
+      <UniqueIdentifier>{3fbb3d45-ae3c-47dc-8c73-62895eaa404f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="elf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="memory.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cpu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hardware\casil.c">
+      <Filter>Source Files\hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="ports.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="display.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="timing.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="args.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="peripherals\tim2.c">
+      <Filter>Source Files\peripherals</Filter>
+    </ClCompile>
+    <ClCompile Include="peripherals\uart1.c">
+      <Filter>Source Files\peripherals</Filter>
+    </ClCompile>
+    <ClCompile Include="peripherals\adc.c">
+      <Filter>Source Files\peripherals</Filter>
+    </ClCompile>
+    <ClCompile Include="products\null.c">
+      <Filter>Source Files\products</Filter>
+    </ClCompile>
+    <ClCompile Include="devices\stm8s207s6.c">
+      <Filter>Source Files\devices</Filter>
+    </ClCompile>
+    <ClCompile Include="devices\stm8s003f3.c">
+      <Filter>Source Files\devices</Filter>
+    </ClCompile>
+    <ClCompile Include="peripherals\uart3.c">
+      <Filter>Source Files\peripherals</Filter>
+    </ClCompile>
+    <ClCompile Include="serial.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="console.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tcpconsole.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="devices\stm8s207r8.c">
+      <Filter>Source Files\devices</Filter>
+    </ClCompile>
+    <ClCompile Include="peripherals\clk.c">
+      <Filter>Source Files\peripherals</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="elf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cpu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ports.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="hardware\casil.h">
+      <Filter>Header Files\hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="display.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="timing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="args.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="devices\stm8s003f3.h">
+      <Filter>Header Files\devices</Filter>
+    </ClInclude>
+    <ClInclude Include="peripherals\tim2.h">
+      <Filter>Header Files\peripherals</Filter>
+    </ClInclude>
+    <ClInclude Include="peripherals\uart1.h">
+      <Filter>Header Files\peripherals</Filter>
+    </ClInclude>
+    <ClInclude Include="peripherals\adc.h">
+      <Filter>Header Files\peripherals</Filter>
+    </ClInclude>
+    <ClInclude Include="devices\stm8s207s6.h">
+      <Filter>Header Files\devices</Filter>
+    </ClInclude>
+    <ClInclude Include="products\null.h">
+      <Filter>Header Files\products</Filter>
+    </ClInclude>
+    <ClInclude Include="peripherals\uart3.h">
+      <Filter>Header Files\peripherals</Filter>
+    </ClInclude>
+    <ClInclude Include="serial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="console.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tcpconsole.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="devices\stm8s207r8.h">
+      <Filter>Header Files\devices</Filter>
+    </ClInclude>
+    <ClInclude Include="peripherals\clk.h">
+      <Filter>Header Files\peripherals</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
