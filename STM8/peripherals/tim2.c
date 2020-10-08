@@ -5,7 +5,7 @@
 #include "../memory.h"
 #include "../cpu.h"
 
-uint32_t prescaleratio = 1, prescaleticks = 0;
+int32_t prescaleratio = 1, prescaleticks = 0;
 
 void tim2_init() {
 	uint32_t i;
@@ -33,11 +33,10 @@ void tim2_overflow() {
 	IO[regaddr[TIM2_CNTRH] - io_start] = IO[regaddr[TIM2_ARRH] - io_start];
 }
 
-void tim2_clockrun(uint16_t clocks) {
-	uint16_t i;
+void tim2_clockrun(int32_t clocks) {
+	int32_t i;
 	if ((IO[regaddr[TIM2_CR1] - io_start] & 0x01) == 0x00) return; //don't do anything if counter isn't enabled
 
-	//TODO: Make this more efficient, it's easy...
 	for (i = 0; i < clocks; i++) {
 		if (++prescaleticks >= prescaleratio) {
 			if (++IO[regaddr[TIM2_CNTRL] - io_start] == 0) {

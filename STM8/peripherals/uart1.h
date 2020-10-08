@@ -14,8 +14,9 @@ uint8_t uart1_read(uint32_t addr);
 void uart1_write(uint32_t addr, uint8_t val);
 void uart1_rxBufAdd(uint8_t val);
 uint8_t uart1_rxBufGet(void);
-void uart1_txCallback(void* dummy);
-void uart1_rxCallback(void* dummy);
+void uart1_txCallback(void);
+void uart1_rxCallback(void);
+void uart1_clockrun(int32_t clocks);
 void uart1_init();
 
 #endif

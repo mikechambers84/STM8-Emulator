@@ -14,8 +14,10 @@ uint8_t uart3_read(uint32_t addr);
 void uart3_write(uint32_t addr, uint8_t val);
 void uart3_rxBufAdd(uint8_t val);
 uint8_t uart3_rxBufGet(void);
-void uart3_txCallback(void* dummy);
-void uart3_rxCallback(void* dummy);
+void uart3_txCallback(void);
+void uart3_rxCallback(void);
+void uart3_clockrun(int32_t clocks);
 void uart3_init();
 
 #endif
+

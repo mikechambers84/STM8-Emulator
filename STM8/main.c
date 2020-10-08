@@ -38,7 +38,7 @@ void eeprom_load(char* file) {
 void clocks_callback(void* dummy) {
 	char info[64];
 	if (showclock) {
-		sprintf(info, "Clock speed: %.03f MHz         ", (float)(clocksrun * 2UL) / 1000000.0);
+		sprintf(info, "Clock speed: %.03f MHz         ", ((double)clocksrun * 2) / 1000000.0);
 		if (showdisplay)
 			display_str(40, 0, info);
 		else
@@ -53,8 +53,9 @@ void limiter_callback(void* dummy) {
 
 int main(int argc, char* argv[]) {
 	FILE* dumpfile;
+	int dummy;
 
-	printf("STM8 Emulator v0.06 - 2020/10/05\n\n");
+	printf("STM8 Emulator v0.07 - 2020/10/08\n\n");
 
 	if (args_parse(argc, argv)) {
 		return -1;
@@ -99,7 +100,7 @@ int main(int argc, char* argv[]) {
 	}
 	//printf("Clocks per loop: %ld\n", clocksperloop);
 	printf("\nPress any key to begin emulation...\n");
-	_getch();
+	dummy = _getch();
 
 
 	timing_init();
@@ -114,7 +115,7 @@ int main(int argc, char* argv[]) {
 	cpu_reset();
 	running = 1;
 	while (running) {
-		uint16_t loops;
+		int32_t loops;
 		while (pause) {
 			timing_loop();
 			adc_loop();

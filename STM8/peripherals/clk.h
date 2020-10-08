@@ -20,7 +20,8 @@ extern uint8_t clk_gateUART3;
 extern uint8_t clk_gateUART4;
 
 void clk_init(void);
-void clk_loop(uint16_t clocks);
+void clk_loop(int32_t clocks);
+int32_t clk_prescale(uint8_t pscr);
 uint8_t clk_read(uint32_t addr);
 void clk_write(uint32_t addr, uint8_t val);
 void clk_switchSource(uint8_t source);

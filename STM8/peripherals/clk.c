@@ -54,14 +54,30 @@ void clk_write(uint32_t addr, uint8_t val) {
 	}
 }
 
-void clk_loop(uint16_t clocks) {
+void clk_loop(int32_t clocks) {
 	if (IO[regaddr[CLK_PCKENR1] - io_start] & clk_gateTIM2)
 		tim2_clockrun(clocks);
-	//TODO: Allow disabling of ADC, UART clocks. Also add other timers to emulator.
+	if (IO[regaddr[CLK_PCKENR1] - io_start] & clk_gateUART1)
+		uart1_clockrun(clocks);
+	if (IO[regaddr[CLK_PCKENR1] - io_start] & clk_gateUART3)
+		uart3_clockrun(clocks);
+	if (IO[regaddr[CLK_PCKENR2] - io_start] & clk_gateADC)
+		adc_clockrun(clocks);
+}
+
+int32_t clk_prescale(uint8_t pscr) {
+	uint8_t i;
+	int32_t prescale;
+	prescale = 1;
+	for (i = 0; i < pscr; i++) {
+		prescale *= 2;
+	}
+	return prescale;
 }
 
 void clk_switchSource(uint8_t source) {
-	int32_t speed, prescale, pscrreg, i;
+	int32_t speed;
+	uint8_t pscrreg;
 	clk_cmsr = source;
 	switch (source) {
 	case CLK_CMSR_HSE:
@@ -83,11 +99,8 @@ void clk_switchSource(uint8_t source) {
 		//printf("DEBUG: Invalid clock source 0x%02X!\n", source);
 		return;
 	}
-	prescale = 1;
-	for (i = 0; i < pscrreg; i++) {
-		prescale *= 2;
-	}
-	speed /= prescale;
+
+	speed /= clk_prescale(pscrreg);
 	//printf("Speed: %ld Hz\n", speed);
 	clocksperloop = speed / 100;
 	
