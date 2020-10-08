@@ -35,6 +35,7 @@ void cpu_reset() {
 
 	pc = 0x8000; //reset vector
 	sp = ram_start + ram_size - 1;
+	cc = COND_I0 | COND_I1;
 	halt = 0;
 
 	for (i = 0; i < 32; i++) {
