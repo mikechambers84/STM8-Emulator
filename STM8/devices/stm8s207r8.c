@@ -177,6 +177,9 @@ void stm8s207r8_init() {
 	regaddr[CLK_CANCCR] = STM8S207R8_CLK_CANCCR;
 	regaddr[CLK_HSITRIMR] = STM8S207R8_CLK_HSITRIMR;
 	regaddr[CLK_SWIMCCR] = STM8S207R8_CLK_SWIMCCR;
+	regaddr[IWDG_KR] = STM8S207R8_IWDG_KR;
+	regaddr[IWDG_PR] = STM8S207R8_IWDG_PR;
+	regaddr[IWDG_RLR] = STM8S207R8_IWDG_RLR;
 
 	ports_start = STM8S207R8_PORTS_START;
 	ports_end = STM8S207R8_PORTS_END;
@@ -190,6 +193,8 @@ void stm8s207r8_init() {
 	adc_end = STM8S207R8_ADC_END;
 	clk_start = STM8S207R8_CLK_START;
 	clk_end = STM8S207R8_CLK_END;
+	iwdg_start = STM8S207R8_IWDG_START;
+	iwdg_end = STM8S207R8_IWDG_END;
 
 	use_PA = 1;
 	use_PB = 1;

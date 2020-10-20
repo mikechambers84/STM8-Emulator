@@ -6,14 +6,15 @@
 #include "peripherals/tim2.h"
 #include "peripherals/adc.h"
 #include "peripherals/clk.h"
+#include "peripherals/iwdg.h"
 #include "ports.h"
 #include "cpu.h"
 
-uint8_t *flash = NULL;
-uint8_t *RAM = NULL;
-uint8_t *EEPROM = NULL;
-uint8_t *IO = NULL;
-uint8_t *CPUREG = NULL;
+uint8_t* flash = NULL;
+uint8_t* RAM = NULL;
+uint8_t* EEPROM = NULL;
+uint8_t* IO = NULL;
+uint8_t* CPUREG = NULL;
 
 uint32_t regaddr[REGISTERS_COUNT];
 
@@ -22,6 +23,9 @@ uint32_t flash_start = 0, ram_start = 0, eeprom_start = 0, io_start = 0, cpureg_
 
 uint32_t ports_start = 0, uart1_start = 0, uart3_start = 0, tim2_start = 0, adc_start = 0, clk_start = 0;
 uint32_t ports_end = 0, uart1_end = 0, uart3_end = 0, tim2_end = 0, adc_end = 0, clk_end = 0;
+
+uint32_t iwdg_start = 0;
+uint32_t iwdg_end = 0;
 
 //MEMDEBUG_t mem_watch[32];
 //uint8_t mem_watchnum = 0;
@@ -117,15 +121,18 @@ uint8_t memory_read(uint32_t addr) {
 		else if ((addr >= clk_start) && (addr <= clk_end)) {
 			ret = clk_read(addr);
 		}
+		else if ((addr >= iwdg_start) && (addr <= iwdg_end)) {
+			ret = iwdg_read(addr);
+		}
 		else
 			ret = IO[addr - io_start];
 	}
 	else if ((addr >= cpureg_start) && (addr < (cpureg_start + cpureg_size))) {
 		ret = memory_cpuregread(addr);
 	}
-#ifdef DEBUG_OUTPUT
-	printf("memory_read(0x%08X) = %02X\n", addr, ret);
-#endif
+	/*#ifdef DEBUG_OUTPUT
+		printf("memory_read(0x%08X) = %02X\n", addr, ret);
+	#endif*/
 	return ret;
 }
 
@@ -137,9 +144,9 @@ uint16_t memory_read16(uint32_t addr) {
 }
 
 void memory_write(uint32_t addr, uint8_t val) {
-#ifdef DEBUG_OUTPUT
-	printf("memory_write(0x%08X, 0x%02X)\n", addr, val);
-#endif
+	/*#ifdef DEBUG_OUTPUT
+		printf("memory_write(0x%08X, 0x%02X)\n", addr, val);
+	#endif*/
 
 	/*if ((addr >= 0x14F) && (addr < 0x184)) {
 		fprintf(stderr, "Addr %08X write <- %02X (%u) @ PC %08X\n", addr, val, val, pc);
@@ -180,6 +187,9 @@ void memory_write(uint32_t addr, uint8_t val) {
 		}
 		else if ((addr >= clk_start) && (addr <= clk_end)) {
 			clk_write(addr, val);
+		}
+		else if ((addr >= iwdg_start) && (addr <= iwdg_end)) {
+			iwdg_write(addr, val);
 		}
 		return;
 	}

@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
 	FILE* dumpfile;
 	int dummy;
 
-	printf("STM8 Emulator v0.07 - 2020/10/08\n\n");
+	printf("STM8 Emulator v0.09 - 2020/10/20\n\n");
 
 	if (args_parse(argc, argv)) {
 		return -1;

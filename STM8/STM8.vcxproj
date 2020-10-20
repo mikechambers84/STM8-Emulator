@@ -153,6 +153,7 @@
     <ClCompile Include="memory.c" />
     <ClCompile Include="peripherals\adc.c" />
     <ClCompile Include="peripherals\clk.c" />
+    <ClCompile Include="peripherals\iwdg.c" />
     <ClCompile Include="peripherals\tim2.c" />
     <ClCompile Include="peripherals\uart1.c" />
     <ClCompile Include="peripherals\uart3.c" />
@@ -176,6 +177,7 @@
     <ClInclude Include="memory.h" />
     <ClInclude Include="peripherals\adc.h" />
     <ClInclude Include="peripherals\clk.h" />
+    <ClInclude Include="peripherals\iwdg.h" />
     <ClInclude Include="peripherals\tim2.h" />
     <ClInclude Include="peripherals\uart1.h" />
     <ClInclude Include="peripherals\uart3.h" />

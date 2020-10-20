@@ -27,8 +27,9 @@ EEPROM contents can be loaded and saved via a file with the -eeprom option.
 #### Currently supported on-chip devices:
 
 - GPIO ports
+- IWDG
 - CLK
-- Analog-to-Digital converter (ADC)
+- ADC
 - UART1
 - UART3
 - TIM2 timer

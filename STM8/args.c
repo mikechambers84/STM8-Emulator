@@ -14,7 +14,7 @@
 #include "devices/stm8s003f3.h"
 
 double speedarg = -1;
-uint8_t showclock = 0, showdisplay = 1, overridecpu = 0;
+uint8_t showclock = 0, showdisplay = 1, overridecpu = 0, exitonIWDG = 0, disableIWDG = 0;
 char* elffile = NULL;
 char* ramfile = NULL;
 char* eepromfile = NULL;
@@ -54,33 +54,38 @@ int args_isMatch(char* s1, char* s2) {
 }
 
 void args_showHelp() {
-	printf("Command line parameters:\r\n\r\n");
+	printf("Command line parameters:\n");
 
-	printf("Emulation options:\r\n");
-	printf("  -cpu <model>               Specify CPU model. Use \"-cpu list\" to show available options.\r\n");
-	printf("  -elf <input file>          Specify ELF file to load and execute.\r\n");
-	printf("  -eeprom <input file>       Specify EEPROM file to load and save.\r\n");
-	printf("  -ramdump <input file>      Specify file to dump RAM contents to on exit.\r\n");
-	printf("  -osc <mhz>                 Specify external oscillator clock speed to emulate in Hz. Default is 24 MHz.\r\n");
-	printf("  -product <product>         Specify product hardware design to simulate.\r\n");
-	printf("                             Use \"-product list\" to show available options.\r\n\r\n");
+	printf("\nEmulation options:\n");
+	printf("  -cpu <model>               Specify CPU model. Use \"-cpu list\" to show available options.\n");
+	printf("  -elf <input file>          Specify ELF file to load and execute.\n");
+	printf("  -eeprom <input file>       Specify EEPROM file to load and save.\n");
+	printf("  -ramdump <input file>      Specify file to dump RAM contents to on exit.\n");
+	printf("  -osc <mhz>                 Specify external oscillator clock speed to emulate in Hz. Default is 24 MHz.\n");
+	printf("  -product <product>         Specify product hardware design to emulate.\n");
+	printf("                             Use \"-product list\" to show available options.\n");
 
-	printf("UART1 options:\r\n");
-	printf("  -uart1console              Redirect UART1 through the stdio console.\r\n");
-	printf("  -uart1serial <n> <baud>    Redirect UART1 through COM port <n> at <baud>.\r\n");
-	printf("  -uart1sock <port>          Redirect UART1 through TCP socket, listen on <port>.\r\n\r\n");
+	printf("\nWatchdog options:\n");
+	printf("  -exitiwdg                  Treat IWDG terminal count as an error condition and exit emulator.\n");
+	printf("  -disableiwdg               Disable IWDG counter entirely.\n");
 
-	printf("UART3 options:\r\n");
-	printf("  -uart3serial <n> <baud>    Redirect UART3 through COM port <n> at <baud>.\r\n");
-	printf("  -uart3console              Redirect UART3 through the stdio console.\r\n");
-	printf("  -uart3sock <port>          Redirect UART3 through TCP socket, listen on <port>.\r\n\r\n");
+	printf("\nUART1 options:\n");
+	printf("  -uart1console              Redirect UART1 through the stdio console.\n");
+	printf("  -uart1serial <n> <baud>    Redirect UART1 through COM port <n> at <baud>.\n");
+	printf("  -uart1sock <port>          Redirect UART1 through TCP socket, listen on <port>.\n");
 
-	printf("Display options:\r\n");
-	printf("  -nodisplay                 Don't display a product representation.\r\n\r\n");
+	printf("\nUART3 options:\n");
+	printf("  -uart3serial <n> <baud>    Redirect UART3 through COM port <n> at <baud>.\n");
+	printf("  -uart3console              Redirect UART3 through the stdio console.\n");
+	printf("  -uart3sock <port>          Redirect UART3 through TCP socket, listen on <port>.\n");
 
-	printf("Miscellaneous options:\r\n");
-	printf("  -showclock                 Display actual clock speed.\r\n");
-	printf("  -h                         Show this help screen.\r\n");
+	printf("\nDisplay options:\r\n");
+	printf("  -nodisplay                 Don't display a product representation.\n");
+
+	printf("\nMiscellaneous options:\n");
+	printf("  -showclock                 Display actual clock speed.\n");
+	printf("  -h                         Show this help screen.\n");
+
 }
 
 void args_listcpu() {
@@ -257,6 +262,12 @@ int args_parse(int argc, char* argv[]) {
 			}
 			uart3_redirect = UART3_REDIRECT_TCP;
 			i++;
+		}
+		else if (args_isMatch(argv[i], "-exitiwdg")) {
+			exitonIWDG = 1;
+		}
+		else if (args_isMatch(argv[i], "-disableiwdg")) {
+			disableIWDG = 1;
 		}
 		else if (args_isMatch(argv[i], "-consolemode")) {
 			//This mode is not meant to be called by the user, but by the emulator

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 extern double speedarg;
-extern uint8_t showclock, showdisplay, overridecpu;
+extern uint8_t showclock, showdisplay, overridecpu, exitonIWDG, disableIWDG;
 extern char* elffile;
 extern char* ramfile;
 extern char* eepromfile;

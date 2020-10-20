@@ -2,7 +2,7 @@
 	STM8 CPU emulator core
 
 	NOTE: I should rewrite this to take advantage of the many bit patterns in the opcodes.
-	      Then I can get rid of the huge switch statement that has a case for each one.
+		  Then I can get rid of the huge switch statement that has a case for each one.
 		  That should also make debugging this code easier.
 */
 
@@ -14,6 +14,7 @@
 #include "peripherals/tim2.h"
 #include "peripherals/adc.h"
 #include "peripherals/clk.h"
+#include "peripherals/iwdg.h"
 #include "cpu.h"
 
 char* cpu_name = "";
@@ -47,6 +48,7 @@ void cpu_reset() {
 	tim2_init();
 	adc_init();
 	clk_init();
+	iwdg_init();
 }
 
 FUNC_INLINE void cpu_push(uint8_t val) {
@@ -136,7 +138,7 @@ FUNC_INLINE void cpu_flags_arith_add(uint8_t dest, uint8_t src) {
 	else
 		CLEAR_COND(COND_C);
 
-	if (GET_COND(COND_C) ^ (D6 & S6 | S6 & R6 | R6 & D6))
+	if (GET_COND(COND_C) ^ (BIT_D6 & BIT_S6 | BIT_S6 & BIT_R6 | BIT_R6 & BIT_D6))
 		SET_COND(COND_V);
 	else
 		CLEAR_COND(COND_V);
@@ -165,7 +167,7 @@ FUNC_INLINE void cpu_flags_arith_add16(uint16_t dest, uint16_t src) {
 	else
 		CLEAR_COND(COND_C);
 
-	if (GET_COND(COND_C) ^ (D14 & S14 | S14 & RW14 | RW14 & D14))
+	if (GET_COND(COND_C) ^ (BIT_D14 & BIT_S14 | BIT_S14 & BIT_RW14 | BIT_RW14 & BIT_D14))
 		SET_COND(COND_V);
 	else
 		CLEAR_COND(COND_V);
@@ -174,7 +176,7 @@ FUNC_INLINE void cpu_flags_arith_add16(uint16_t dest, uint16_t src) {
 FUNC_INLINE void cpu_flags_arith_sub(uint8_t dest, uint8_t src) {
 	uint16_t ctest;
 	//if ((dest ^ result) & (src ^ result) & 0x80)
-	if ((D7 & S7 | D7 & R7 | D7 & S7 & R7) ^ (D6 & S6 | D6 & R6 | D6 & S6 & R6))
+	if ((BIT_D7 & BIT_S7 | BIT_D7 & BIT_R7 | BIT_D7 & BIT_S7 & BIT_R7) ^ (BIT_D6 & BIT_S6 | BIT_D6 & BIT_R6 | BIT_D6 & BIT_S6 & BIT_R6))
 		SET_COND(COND_V);
 	else
 		CLEAR_COND(COND_V);
@@ -200,7 +202,7 @@ FUNC_INLINE void cpu_flags_arith_sub16(uint16_t dest, uint16_t src) {
 	uint32_t ctest;
 
 	//if ((dest ^ result16) & (src ^ result16) & 0x8000)
-	if ((D15 & S15 | D15 & RW15 | D15 & S15 & RW15) ^ (D14 & S14 | D14 & RW14 | D14 & S14 & RW14))
+	if ((BIT_D15 & BIT_S15 | BIT_D15 & BIT_RW15 | BIT_D15 & BIT_S15 & BIT_RW15) ^ (BIT_D14 & BIT_S14 | BIT_D14 & BIT_RW14 | BIT_D14 & BIT_S14 & BIT_RW14))
 		SET_COND(COND_V);
 	else
 		CLEAR_COND(COND_V);
@@ -566,7 +568,7 @@ int32_t cpu_run(int32_t clocks) {
 		printf("Op @ %08X = %02X\n", pc, opcode);
 #endif
 		switch (opcode) {
-		//prefixes
+			//prefixes
 		case 0x72:
 		case 0x90:
 		case 0x91:
@@ -1827,7 +1829,7 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 
-		//0x72 is a prefix
+			//0x72 is a prefix
 		case 0x73:
 			if (prefix == 0x90) //CPL (Y)
 				addr = cpu_addr_indexed_y();
@@ -2080,7 +2082,7 @@ int32_t cpu_run(int32_t clocks) {
 			halt = 1;
 			pc++;
 			break;
-		//0x90 to 0x92 are prefixes
+			//0x90 to 0x92 are prefixes
 		case 0x93:
 			if (prefix == 0x90) //LDW Y,X
 				y = x;
@@ -3353,7 +3355,7 @@ int32_t cpu_run(int32_t clocks) {
 				cpu_flags_logic16(y);
 			}
 			pc++;
-			break;	
+			break;
 		default:
 			valid = 0;
 		}

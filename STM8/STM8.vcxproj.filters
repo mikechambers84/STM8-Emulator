@@ -102,6 +102,9 @@
     <ClCompile Include="peripherals\clk.c">
       <Filter>Source Files\peripherals</Filter>
     </ClCompile>
+    <ClCompile Include="peripherals\iwdg.c">
+      <Filter>Source Files\peripherals</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="elf.h">
@@ -165,6 +168,9 @@
       <Filter>Header Files\devices</Filter>
     </ClInclude>
     <ClInclude Include="peripherals\clk.h">
+      <Filter>Header Files\peripherals</Filter>
+    </ClInclude>
+    <ClInclude Include="peripherals\iwdg.h">
       <Filter>Header Files\peripherals</Filter>
     </ClInclude>
   </ItemGroup>

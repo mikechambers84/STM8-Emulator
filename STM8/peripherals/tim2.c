@@ -4,6 +4,7 @@
 #include "../config.h"
 #include "../memory.h"
 #include "../cpu.h"
+#include "clk.h"
 
 int32_t prescaleratio = 1, prescaleticks = 0;
 
@@ -29,8 +30,8 @@ void tim2_overflow() {
 	}
 	IO[regaddr[TIM2_SR1] - io_start] |= 0x01; //set UIF flag in status register 1
 	//counter auto-reload
-	IO[regaddr[TIM2_CNTRL] - io_start] = IO[regaddr[TIM2_ARRL] - io_start];
-	IO[regaddr[TIM2_CNTRH] - io_start] = IO[regaddr[TIM2_ARRH] - io_start];
+	//IO[regaddr[TIM2_CNTRL] - io_start] = IO[regaddr[TIM2_ARRL] - io_start];
+	//IO[regaddr[TIM2_CNTRH] - io_start] = IO[regaddr[TIM2_ARRH] - io_start];
 }
 
 void tim2_clockrun(int32_t clocks) {
@@ -40,9 +41,15 @@ void tim2_clockrun(int32_t clocks) {
 	for (i = 0; i < clocks; i++) {
 		if (++prescaleticks >= prescaleratio) {
 			if (++IO[regaddr[TIM2_CNTRL] - io_start] == 0) {
-				if (++IO[regaddr[TIM2_CNTRH] - io_start] == 0) {
+				/*if (++IO[regaddr[TIM2_CNTRH] - io_start] == 0) {
 					tim2_overflow();
-				}
+				}*/
+				IO[regaddr[TIM2_CNTRH] - io_start]++;
+			}
+			if ((((uint16_t)IO[regaddr[TIM2_CNTRH] - io_start] << 8) | (uint16_t)IO[regaddr[TIM2_CNTRL] - io_start]) == (((uint16_t)IO[regaddr[TIM2_ARRH] - io_start] << 8) | (uint16_t)IO[regaddr[TIM2_ARRL] - io_start])) {
+				tim2_overflow();
+				IO[regaddr[TIM2_CNTRL] - io_start] = 0;
+				IO[regaddr[TIM2_CNTRH] - io_start] = 0;
 			}
 			//printf("%02X%02X\n", IO[regaddr[TIM2_CNTRH] - IO_START], IO[regaddr[TIM2_CNTRL] - IO_START]);
 			prescaleticks -= prescaleratio;
@@ -55,7 +62,7 @@ void tim2_write(uint32_t addr, uint8_t val) {
 	if (addr == regaddr[TIM2_PSCR]) {
 		val &= 0x0F;
 		IO[regaddr[TIM2_PSCR] - io_start] = val;
-		prescaleratio = (uint32_t)pow(2, (double)val);
+		prescaleratio = (int32_t)clk_prescale(val);
 		//printf("TIM2 prescale: %lu\n", prescaleratio);
 	}
 }
