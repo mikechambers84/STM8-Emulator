@@ -17,6 +17,7 @@ uint8_t uart1_redirect = UART1_REDIRECT_NULL, uart1_txPending = 0;
 double uart1_baud = 0;
 
 void uart1_rxBufAdd(uint8_t val) {
+	if ((IO[regaddr[UART1_CR2] - io_start] & 0x04) == 0x00) return; //receiver disabled? exit...
 	if (((uart1_rxWrite + 1) & 1023) == uart1_rxRead) return; //buffer full, discard byte
 	uart1_rxBuf[uart1_rxWrite++] = val;
 	uart1_rxWrite &= 1023;
@@ -49,6 +50,7 @@ void uart1_write(uint32_t addr, uint8_t val) {
 		//ignore writes to status register
 	}
 	else if (addr == regaddr[UART1_DR]) {
+		if ((IO[regaddr[UART1_CR2] - io_start] & 0x08) == 0x00) return; //transmitter disabled? exit...
 		IO[regaddr[UART1_SR] - io_start] &= 0x3F; //TODO: should bit 6 (transmission complete) be cleared here, or only bit 7? (TX data reg empty)
 		uart1_txPending = 1;
 		uart1_txClocksRemain = uart1_clocksTotal;

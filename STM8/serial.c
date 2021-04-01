@@ -58,10 +58,48 @@ int serial_read(int uart, char* dst) {
 void serial_write(int uart, char* src) {
     DWORD didwrite = 0;
     OVERLAPPED osWriter = { 0 };
+    DWORD dwRes;
+    BOOL fRes;
 
     if (serial_hComm[uart] == INVALID_HANDLE_VALUE) return;
 
-    WriteFile(serial_hComm[uart], src, 1, &didwrite, &osWriter);
+    osWriter.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (osWriter.hEvent == NULL)
+        // error creating overlapped event handle
+        return;
+
+    // Issue write.
+    if (!WriteFile(serial_hComm[uart], src, 1, &didwrite, &osWriter)) {
+        if (GetLastError() != ERROR_IO_PENDING) {
+            // WriteFile failed, but isn't delayed. Report error and abort.
+            fRes = FALSE;
+        }
+        else
+            // Write is pending.
+            dwRes = WaitForSingleObject(osWriter.hEvent, INFINITE);
+            switch (dwRes) {
+            // OVERLAPPED structure's event has been signaled. 
+            case WAIT_OBJECT_0:
+                if (!GetOverlappedResult(serial_hComm[uart], &osWriter, &didwrite, FALSE))
+                    fRes = FALSE;
+                else
+                    // Write operation completed successfully.
+                    fRes = TRUE;
+                break;
+
+        default:
+            // An error has occurred in WaitForSingleObject.
+            // This usually indicates a problem with the
+            // OVERLAPPED structure's event handle.
+            fRes = FALSE;
+            break;
+        }
+    }
+    else
+        // WriteFile completed immediately.
+        fRes = TRUE;
+
+    CloseHandle(osWriter.hEvent);
 }
 
 void serial_loop() {

@@ -10,11 +10,11 @@
 #include "ports.h"
 #include "cpu.h"
 
-uint8_t* flash = NULL;
-uint8_t* RAM = NULL;
-uint8_t* EEPROM = NULL;
-uint8_t* IO = NULL;
-uint8_t* CPUREG = NULL;
+uint8_t *flash = NULL;
+uint8_t *RAM = NULL;
+uint8_t *EEPROM = NULL;
+uint8_t *IO = NULL;
+uint8_t *CPUREG = NULL;
 
 uint32_t regaddr[REGISTERS_COUNT];
 
@@ -24,8 +24,8 @@ uint32_t flash_start = 0, ram_start = 0, eeprom_start = 0, io_start = 0, cpureg_
 uint32_t ports_start = 0, uart1_start = 0, uart3_start = 0, tim2_start = 0, adc_start = 0, clk_start = 0;
 uint32_t ports_end = 0, uart1_end = 0, uart3_end = 0, tim2_end = 0, adc_end = 0, clk_end = 0;
 
-uint32_t iwdg_start = 0;
-uint32_t iwdg_end = 0;
+uint32_t iwdg_start = 0, flash_reg_start = 0;
+uint32_t iwdg_end = 0, flash_reg_end = 0;
 
 //MEMDEBUG_t mem_watch[32];
 //uint8_t mem_watchnum = 0;
@@ -92,6 +92,14 @@ uint8_t memory_read(uint32_t addr) {
 	if ((addr >= flash_start) && (addr < (flash_start + flash_size))) {
 		ret = flash[addr - flash_start];
 	}
+	else if ((addr >= flash_reg_start) && (addr <= flash_reg_end)) {
+		if (addr == regaddr[FLASH_IAPSR]) {
+			ret = IO[regaddr[FLASH_IAPSR] - io_start];
+		}
+		else {
+			ret = 0x00;
+		}
+	}
 	else if ((addr >= ram_start) && (addr < (ram_start + ram_size))) {
 		ret = RAM[addr - ram_start];
 	}
@@ -130,9 +138,9 @@ uint8_t memory_read(uint32_t addr) {
 	else if ((addr >= cpureg_start) && (addr < (cpureg_start + cpureg_size))) {
 		ret = memory_cpuregread(addr);
 	}
-	/*#ifdef DEBUG_OUTPUT
-		printf("memory_read(0x%08X) = %02X\n", addr, ret);
-	#endif*/
+/*#ifdef DEBUG_OUTPUT
+	printf("memory_read(0x%08X) = %02X\n", addr, ret);
+#endif*/
 	return ret;
 }
 
@@ -144,9 +152,9 @@ uint16_t memory_read16(uint32_t addr) {
 }
 
 void memory_write(uint32_t addr, uint8_t val) {
-	/*#ifdef DEBUG_OUTPUT
-		printf("memory_write(0x%08X, 0x%02X)\n", addr, val);
-	#endif*/
+/*#ifdef DEBUG_OUTPUT
+	printf("memory_write(0x%08X, 0x%02X)\n", addr, val);
+#endif*/
 
 	/*if ((addr >= 0x14F) && (addr < 0x184)) {
 		fprintf(stderr, "Addr %08X write <- %02X (%u) @ PC %08X\n", addr, val, val, pc);
@@ -156,6 +164,18 @@ void memory_write(uint32_t addr, uint8_t val) {
 	if ((addr >= flash_start) && (addr < (flash_start + flash_size))) {
 		flash[addr - flash_start] = val;
 		return;
+	}
+	if ((addr >= flash_reg_start) && (addr <= flash_reg_end)) {
+		if (addr == regaddr[FLASH_IAPSR]) {
+			IO[regaddr[FLASH_IAPSR] - io_start] = (IO[regaddr[FLASH_IAPSR] - io_start] & ~0x08) | (val & 0x08);
+		}
+		else if (addr == regaddr[FLASH_DUKR]) {
+			//unlock EEPROM writes if correct hardware key pair written to DUKR
+			if ((IO[regaddr[FLASH_DUKR] - io_start] == 0xAE) && (val == 0x56)) {
+				IO[regaddr[FLASH_IAPSR] - io_start] |= 0x08;
+			}
+			IO[regaddr[FLASH_DUKR] - io_start] = val;
+		}
 	}
 	if ((addr >= ram_start) && (addr < (ram_start + ram_size))) {
 		RAM[addr - ram_start] = val;

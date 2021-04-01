@@ -80,7 +80,7 @@ void adc_write(uint32_t addr, uint8_t val) {
 	}
 	else if (addr == regaddr[ADC_CR1]) {
 		if ((val & 0xFE) == (lastCR1 & 0xFE)) { //conversions are only init'd if all highest 7 bits stayed the same
-			if ((val & 0x01) && !(lastCR1 & 0x01)){ //ADON, initiate a new ADC conversion if set to 1 and was previously 0
+			if ((val & 0x01) && !(lastCR1 & 0x01)) { //ADON, initiate a new ADC conversion if set to 1 and was previously 0
 				adc_curChannel = IO[regaddr[ADC_CSR] - io_start] & 0x0F;
 				adc_clocksTotal = 14 * adc_prescale();
 				adc_clocksRemain = adc_clocksTotal;

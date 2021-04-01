@@ -103,7 +103,7 @@ void clk_switchSource(uint8_t source) {
 	speed /= clk_prescale(pscrreg);
 	//printf("Speed: %ld Hz\n", speed);
 	clocksperloop = speed / 100;
-	
+
 	IO[regaddr[CLK_SWCR] - io_start] |= (1 << 3); //set SWIF bit
 	if (IO[regaddr[CLK_SWCR] - io_start] & (1 << 2)) //if SWIEN bit set
 		cpu_irq(CPU_IRQ_CLK); //then fire IRQ

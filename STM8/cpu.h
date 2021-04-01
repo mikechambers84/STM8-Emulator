@@ -192,7 +192,16 @@
 #define IWDG_PR			129 //IWDG prescaler register
 #define IWDG_RLR		130 //IWDG reload register
 
-#define REGISTERS_COUNT	131
+#define FLASH_CR1		131
+#define FLASH_CR2		132
+#define FLASH_NCR2		133
+#define FLASH_FPR		134
+#define FLASH_NFPR		135
+#define FLASH_IAPSR		136
+#define FLASH_PUKR		137
+#define FLASH_DUKR		138
+
+#define REGISTERS_COUNT	139
 
 
 #define BIT_D0  (dest & 0x01) 

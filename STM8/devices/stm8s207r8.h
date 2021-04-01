@@ -190,4 +190,16 @@ void stm8s207r8_init(void);
 #define STM8S207R8_IWDG_START		STM8S207R8_IWDG_KR
 #define STM8S207R8_IWDG_END			STM8S207R8_IWDG_RLR
 
+#define STM8S207R8_FLASH_CR1		0x505A //Flash control register 1
+#define STM8S207R8_FLASH_CR2		0x505B //Flash control register 2
+#define STM8S207R8_FLASH_NCR2		0x505C //Flash complimentary control register 2
+#define STM8S207R8_FLASH_FPR		0x505D //Flash protection register
+#define STM8S207R8_FLASH_NFPR		0x505E //Flash complimentary protection register
+#define STM8S207R8_FLASH_IAPSR		0x505F //Flash in-application programming status register
+#define STM8S207R8_FLASH_PUKR		0x5062 //Flash Program memory unprotection register
+#define STM8S207R8_FLASH_DUKR		0x5064 //Data EEPROM unprotection register
+
+#define STM8S207R8_FLASH_REG_START	STM8S207R8_FLASH_CR1
+#define STM8S207R8_FLASH_REG_END	STM8S207R8_FLASH_DUKR
+
 #endif

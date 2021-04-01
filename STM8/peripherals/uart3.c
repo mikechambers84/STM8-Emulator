@@ -17,6 +17,7 @@ uint8_t uart3_redirect = UART3_REDIRECT_NULL, uart3_txPending = 0;
 double uart3_baud = 0;
 
 void uart3_rxBufAdd(uint8_t val) {
+	if ((IO[regaddr[UART3_CR2] - io_start] & 0x04) == 0x00) return; //receiver disabled? exit...
 	if (((uart3_rxWrite + 1) & 1023) == uart3_rxRead) return; //buffer full, discard byte
 	uart3_rxBuf[uart3_rxWrite++] = val;
 	uart3_rxWrite &= 1023;
@@ -49,6 +50,7 @@ void uart3_write(uint32_t addr, uint8_t val) {
 		//ignore writes to status register
 	}
 	else if (addr == regaddr[UART3_DR]) {
+		if ((IO[regaddr[UART3_CR2] - io_start] & 0x08) == 0x00) return; //transmitter disabled? exit...
 		IO[regaddr[UART3_SR] - io_start] &= 0x3F; //TODO: should bit 6 (transmission complete) be cleared here, or only bit 7? (TX data reg empty)
 		uart3_txPending = 1;
 		uart3_txClocksRemain = uart3_clocksTotal;
@@ -101,7 +103,7 @@ void uart3_rxCallback(void) {
 	speed = (double)clocksperloop * 100;
 	if (uart3_div > 0) {
 		uart3_baud = speed / (double)uart3_div;
-		uart3_clocksTotal = ((clocksperloop * 100)  / (int32_t)uart3_baud) * 10;
+		uart3_clocksTotal = ((clocksperloop * 100) / (int32_t)uart3_baud) * 10;
 	}
 
 	if (uart3_rxRead == uart3_rxWrite) return; //nothing new in the buffer

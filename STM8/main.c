@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
 	FILE* dumpfile;
 	int dummy;
 
-	printf("STM8 Emulator v0.09 - 2020/10/20\n\n");
+	printf("STM8 Emulator v0.13 - 2021/03/19\n\n");
 
 	if (args_parse(argc, argv)) {
 		return -1;
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
 	cpu_reset();
 	running = 1;
 	while (running) {
-		int32_t loops;
+		uint16_t loops;
 		while (pause) {
 			timing_loop();
 			adc_loop();

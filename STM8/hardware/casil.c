@@ -28,6 +28,20 @@ void casil_print() {
 	printf("\"");
 }
 
+void casil_checkifupdated() {
+	static uint8_t lastdisp[16];
+	uint8_t i;
+
+	for (i = 0; i < 16; i++) {
+		if (disp[i] != lastdisp[i]) {
+			product_markforupdate();
+			break;
+		}
+	}
+
+	memcpy(lastdisp, disp, 16);
+}
+
 void casil_rs(uint8_t val) {
 	rs = val;
 }
@@ -48,18 +62,22 @@ void casil_en(uint8_t val) {
 	}
 	else { //low nibble
 		dataval = (dataval & 0xF0) | (latch & 0x0F);
-		if (prevcmd & 0x80) {
-			if ((prevcmd >= 0x80) && (prevcmd <= 0x87)) {
-				disp[prevcmd - 0x80] = dataval;
-				product_markforupdate();
-			}
-			else if ((prevcmd >= 0xC0) && (prevcmd <= 0xC7)) {
-				disp[prevcmd - 0xC0 + 8] = dataval;
-				casilmem[prevcmd] = dataval;
-				product_markforupdate();
-			}
-		}
 		//printf("Casil command: %02X\n", dataval);
+		if (!rs && !rw) {
+			casiladdr = dataval;
+		}
+		else if (!rw) {
+			casilmem[casiladdr] = dataval;
+			if ((casiladdr >= 0x80) && (casiladdr <= 0x87)) {
+				disp[casiladdr - 0x80] = dataval;
+				casil_checkifupdated();
+			}
+			else if ((casiladdr >= 0xC0) && (casiladdr <= 0xC7)) {
+				disp[casiladdr - 0xB8] = dataval;
+				casil_checkifupdated();
+			}
+			casiladdr++;
+		}
 		prevcmd = dataval;
 	}
 
@@ -71,5 +89,5 @@ void casil_latchwrite(uint8_t val) {
 }
 
 uint8_t casil_latchread() {
-
+	return 0;
 }

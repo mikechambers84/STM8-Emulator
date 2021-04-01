@@ -102,4 +102,60 @@ void ports_extmodify(uint32_t addr, uint8_t val) {
 		}
 		IO[regaddr[PC_IDR] - io_start] = val;
 	}
+
+	if (addr == regaddr[PD_IDR]) {
+		newval = val; // &IO[regaddr[PD_DDR] - io_start] & IO[regaddr[PD_CR2] - io_start];
+		extisens = (IO[regaddr[EXTI_CR1] - io_start] >> 6) & 3;
+		oldval = IO[regaddr[PD_IDR] - io_start] & IO[regaddr[PD_DDR] - io_start] & IO[regaddr[PD_CR2] - io_start];
+		for (i = 0; i < 8; i++) {
+			if ((newval & (1 << i)) != (oldval & (1 << i))) {
+				switch (extisens) {
+				case 0: //falling edge and low level
+					if ((newval & (1 << i)) == 0)
+						cpu_irq(CPU_IRQ_EXTI3);
+					break;
+				case 1: //rising edge only
+					if (newval & (1 << i))
+						cpu_irq(CPU_IRQ_EXTI3);
+					break;
+				case 2: //falling edge only
+					if ((newval & (1 << i)) == 0)
+						cpu_irq(CPU_IRQ_EXTI3);
+					break;
+				case 3: //rising and falling edge
+					cpu_irq(CPU_IRQ_EXTI3);
+					break;
+				}
+			}
+		}
+		IO[regaddr[PD_IDR] - io_start] = val;
+	}
+
+	if (addr == regaddr[PE_IDR]) {
+		newval = val; // &IO[regaddr[PE_DDR] - io_start] & IO[regaddr[PE_CR2] - io_start];
+		extisens = IO[regaddr[EXTI_CR2] - io_start] & 3;
+		oldval = IO[regaddr[PE_IDR] - io_start] & IO[regaddr[PE_DDR] - io_start] & IO[regaddr[PE_CR2] - io_start];
+		for (i = 0; i < 8; i++) {
+			if ((newval & (1 << i)) != (oldval & (1 << i))) {
+				switch (extisens) {
+				case 0: //falling edge and low level
+					if ((newval & (1 << i)) == 0)
+						cpu_irq(CPU_IRQ_EXTI4);
+					break;
+				case 1: //rising edge only
+					if (newval & (1 << i))
+						cpu_irq(CPU_IRQ_EXTI4);
+					break;
+				case 2: //falling edge only
+					if ((newval & (1 << i)) == 0)
+						cpu_irq(CPU_IRQ_EXTI4);
+					break;
+				case 3: //rising and falling edge
+					cpu_irq(CPU_IRQ_EXTI4);
+					break;
+				}
+			}
+		}
+		IO[regaddr[PE_IDR] - io_start] = val;
+	}
 }
