@@ -5,14 +5,15 @@
 #ifdef __WIN32__
 #include <Windows.h>
 extern HANDLE hConsole;
+extern uint8_t doupdate;
+#elif __unix__
 #endif
 
-extern uint8_t doupdate;
 
 void cls(void);
 void gotoxy(int x, int y);
 void display_str(int y, int x, char* str);
-void display_init(void);
+int display_init(void);
 void display_shutdown(void);
 
 #endif

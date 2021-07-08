@@ -10,7 +10,7 @@
 #include "ports.h"
 #include "cpu.h"
 
-uint8_t *flash = NULL;
+uint8_t *flash_mem = NULL;
 uint8_t *RAM = NULL;
 uint8_t *EEPROM = NULL;
 uint8_t *IO = NULL;
@@ -90,7 +90,7 @@ uint8_t memory_read(uint32_t addr) {
 	uint8_t ret = 0xFF;
 
 	if ((addr >= flash_start) && (addr < (flash_start + flash_size))) {
-		ret = flash[addr - flash_start];
+		ret = flash_mem[addr - flash_start];
 	}
 	else if ((addr >= flash_reg_start) && (addr <= flash_reg_end)) {
 		if (addr == regaddr[FLASH_IAPSR]) {
@@ -162,7 +162,7 @@ void memory_write(uint32_t addr, uint8_t val) {
 	//ports and registers
 
 	if ((addr >= flash_start) && (addr < (flash_start + flash_size))) {
-		flash[addr - flash_start] = val;
+		flash_mem[addr - flash_start] = val;
 		return;
 	}
 	if ((addr >= flash_reg_start) && (addr <= flash_reg_end)) {

@@ -14,7 +14,7 @@
 	uint8_t accesstype;
 } MEMDEBUG_t;*/
 
-extern uint8_t *flash;
+extern uint8_t *flash_mem;
 extern uint8_t *RAM;
 extern uint8_t *EEPROM;
 extern uint8_t *IO;

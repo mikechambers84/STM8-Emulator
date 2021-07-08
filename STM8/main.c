@@ -2,7 +2,6 @@
 	STM8 emulator main
 */
 
-#include <stdio.h>
 #include <stdint.h>
 #include "config.h"
 #include "elf.h"
@@ -19,8 +18,11 @@
 #include "serial.h"
 #include "tcpconsole.h"
 #ifdef __WIN32__
+#include <stdio.h>
 #include <conio.h>
 #include <Windows.h>
+#elif __unix__
+#include <curses.h>
 #endif
 
 uint32_t clocksrun = 0, clocktimer;
@@ -104,15 +106,16 @@ int main(int argc, char* argv[]) {
 	printf("\nPress any key to begin emulation...\n");
 	#ifdef __WIN32__
 	dummy = _getch();
-	#endif
-	#ifdef __unix__
+	#elif __unix__
 	dummy = getchar();
 	#endif
 
 	timing_init();
 #ifndef DEBUG_OUTPUT
 	if (showdisplay) {
-		display_init();
+		if (display_init() != 0) {
+			return -1;
+		}
 		product_init();
 	}
 #endif

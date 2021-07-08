@@ -28,17 +28,17 @@ void stm8s003f3_init() {
 	cpureg_start = STM8S003F3_CPU_REG_START;
 	cpureg_size = STM8S003F3_CPU_REG_SIZE;
 
-	flash = (uint8_t*)malloc(STM8S003F3_FLASH_SIZE);
+	flash_mem = (uint8_t*)malloc(STM8S003F3_FLASH_SIZE);
 	RAM = (uint8_t*)malloc(STM8S003F3_RAM_SIZE);
 	EEPROM = (uint8_t*)malloc(STM8S003F3_EEPROM_SIZE);
 	IO = (uint8_t*)malloc(STM8S003F3_IO_SIZE);
 	CPUREG = (uint8_t*)malloc(STM8S003F3_CPU_REG_SIZE);
-	if ((flash == NULL) || (RAM == NULL) || (EEPROM == NULL) || (IO == NULL) || (CPUREG == NULL)) {
+	if ((flash_mem == NULL) || (RAM == NULL) || (EEPROM == NULL) || (IO == NULL) || (CPUREG == NULL)) {
 		printf("Memory allocation error!\n");
 		exit(-1);
 	}
 
-	memset(flash, 0, STM8S003F3_FLASH_SIZE);
+	memset(flash_mem, 0, STM8S003F3_FLASH_SIZE);
 	memset(RAM, 0, STM8S003F3_RAM_SIZE);
 	memset(EEPROM, 0, STM8S003F3_EEPROM_SIZE);
 	memset(IO, 0, STM8S003F3_IO_SIZE);

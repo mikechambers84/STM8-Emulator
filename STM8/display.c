@@ -6,9 +6,12 @@
 #include <conio.h>
 #include <windows.h> 
 #endif
+#ifdef __unix__
+#include <curses.h>
+#endif
 
-uint8_t doupdate = 1;
 #ifdef __WIN32__
+uint8_t doupdate = 1;
 HANDLE hConsole;
 
 void cls() {
@@ -74,7 +77,7 @@ void display_str(int x, int y, char* str) {
     printf(str);
 }
 
-void display_init() {
+int display_init() {
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, 7);
     cls();
@@ -94,19 +97,22 @@ void display_shutdown() {
 #ifdef __unix__
 
 void cls(void) {
-
+    
 }
-void gotoxy(int x, int y) {
+void gotoxy(int x, int y) {    
 
 }
 void display_str(int y, int x, char* str) {
-
+    mvprintw(x, y, str); // move to x, y position and print to screen.
+    refresh(); // print to terminal.
 }
 void display_init(void) {
-
+    if (initscr() != 0) { //Start curses mode
+		return -1; // Error if not enough memory.
+	}
 }
 void display_shutdown(void) {
-
+	endwin(); // Close curses mode
 }
 
 #endif
