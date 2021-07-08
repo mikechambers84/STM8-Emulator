@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <Windows.h>
 #include "peripherals/uart1.h"
 #include "peripherals/uart3.h"
+#ifdef __WIN32__
+#include <Windows.h>
 
 HANDLE serial_hComm[3] = {
     INVALID_HANDLE_VALUE,
@@ -101,6 +102,21 @@ void serial_write(int uart, char* src) {
 
     CloseHandle(osWriter.hEvent);
 }
+#endif
+
+//TODO[epic=linux]: Serial implementation
+#ifdef __unix__
+    int serial_init(int uart, int comnum, int baud) {
+        return 0;
+    }
+    int serial_read(int uart, char* dst) {
+        return 0;
+    }
+    void serial_write(int uart, char* src) {
+
+    }
+#endif
+
 
 void serial_loop() {
     char newbuf;

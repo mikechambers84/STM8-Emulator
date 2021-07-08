@@ -1,9 +1,12 @@
 #ifndef _DISPLAY_H_
 #define _DISPLAY_H_
+#include <stdint.h>
 
+#ifdef __WIN32__
 #include <Windows.h>
-
 extern HANDLE hConsole;
+#endif
+
 extern uint8_t doupdate;
 
 void cls(void);

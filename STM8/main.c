@@ -3,9 +3,7 @@
 */
 
 #include <stdio.h>
-#include <conio.h>
 #include <stdint.h>
-#include <Windows.h>
 #include "config.h"
 #include "elf.h"
 #include "memory.h"
@@ -20,6 +18,10 @@
 #include "args.h"
 #include "serial.h"
 #include "tcpconsole.h"
+#ifdef __WIN32__
+#include <conio.h>
+#include <Windows.h>
+#endif
 
 uint32_t clocksrun = 0, clocktimer;
 uint8_t pause = 0;
@@ -100,8 +102,12 @@ int main(int argc, char* argv[]) {
 	}
 	//printf("Clocks per loop: %ld\n", clocksperloop);
 	printf("\nPress any key to begin emulation...\n");
+	#ifdef __WIN32__
 	dummy = _getch();
-
+	#endif
+	#ifdef __unix__
+	dummy = getchar();
+	#endif
 
 	timing_init();
 #ifndef DEBUG_OUTPUT

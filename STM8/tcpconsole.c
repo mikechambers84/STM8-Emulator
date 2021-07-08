@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <winsock2.h>
 #include "peripherals/uart1.h"
 #include "peripherals/uart3.h"
+
+#ifdef __WIN32__
+#include <winsock2.h>
 
 WSADATA wsaData;
 SOCKET listen_socket[3], msgsock[3];
@@ -122,3 +124,17 @@ void tcpconsole_send(uint8_t uart, uint8_t val) {
         //TODO: error handling
     }
 }
+#endif
+
+//TODO[epic=linux]: tcpconsole implementation
+#ifdef __unix__
+int tcpconsole_init(uint8_t uart, uint16_t port) {
+    return 0;
+}
+void tcpconsole_loop(void) {
+
+}
+void tcpconsole_send(uint8_t uart, uint8_t val) {
+
+}
+#endif

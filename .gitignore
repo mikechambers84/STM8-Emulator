@@ -1,0 +1,7 @@
+compile_commands.json
+CMakeCache.txt
+cmake_install.cmake
+CMakeFiles
+.vscode
+Makefile
+STM8_LINUX

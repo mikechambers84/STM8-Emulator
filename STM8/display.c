@@ -1,12 +1,15 @@
 #include <stdio.h>
-#include <conio.h>
 #include <stdint.h>
-#include <windows.h> 
 #include "memory.h"
 #include "hardware/casil.h"
+#ifdef __WIN32__
+#include <conio.h>
+#include <windows.h> 
+#endif
 
-HANDLE hConsole;
 uint8_t doupdate = 1;
+#ifdef __WIN32__
+HANDLE hConsole;
 
 void cls() {
     COORD coordScreen = { 0, 0 };    // home for the cursor 
@@ -58,6 +61,7 @@ void cls() {
 }
 
 void gotoxy(int x, int y) {
+
 	COORD coord;
 	coord.X = x;
 	coord.Y = y;
@@ -84,3 +88,25 @@ void display_shutdown() {
     SetConsoleTextAttribute(hConsole, 7);
     gotoxy(0, lastrow - 1);
 }
+#endif
+
+//TODO[epic=linux]: curses implemenation.
+#ifdef __unix__
+
+void cls(void) {
+
+}
+void gotoxy(int x, int y) {
+
+}
+void display_str(int y, int x, char* str) {
+
+}
+void display_init(void) {
+
+}
+void display_shutdown(void) {
+
+}
+
+#endif

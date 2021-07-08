@@ -1,10 +1,18 @@
 #include <stdio.h>
-#include <conio.h>
 #include <stdint.h>
-#include <Windows.h>
 #include "console.h"
 
-void console_init(char* title) {
-	SetConsoleTitleA(title);
+#ifdef __WIN32__
+#include <conio.h>
+#include <Windows.h>
+#endif
 
+#ifdef linux
+
+#endif
+
+void console_init(char* title) {
+	#ifdef __WIN32__	
+	SetConsoleTitleA(title);
+	#endif
 }

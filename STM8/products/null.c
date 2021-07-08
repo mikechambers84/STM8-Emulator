@@ -1,11 +1,13 @@
 #include <stdio.h>
-#include <conio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include "../args.h"
 #include "../cpu.h"
 #include "../peripherals/uart1.h"
 #include "../peripherals/uart3.h"
+#ifdef __WIN32__
+#include <conio.h>
+#endif
 
 void null_register() {
 	if (overridecpu == 0) {
@@ -33,6 +35,7 @@ void null_markforupdate() {
 void null_loop() {
 	uint8_t cc, gotkey;
 	gotkey = 0;
+	#ifdef __WIN32__
 	if (_kbhit()) {
 		cc = _getch();
 		if (cc == 27) {
@@ -42,6 +45,10 @@ void null_loop() {
 			gotkey = 1;
 		}
 	}
+	#endif
+	//TODO[epic=linux]: small implementation
+	#ifdef __unix__
+	#endif
 
 	if ((uart1_redirect == UART1_REDIRECT_CONSOLE) && gotkey) {
 		uart1_rxBufAdd(cc);
