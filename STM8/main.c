@@ -17,8 +17,8 @@
 #include "args.h"
 #include "serial.h"
 #include "tcpconsole.h"
-#ifdef __WIN32__
 #include <stdio.h>
+#ifdef __WIN32__
 #include <conio.h>
 #include <Windows.h>
 #elif __unix__
@@ -104,6 +104,7 @@ int main(int argc, char* argv[]) {
 	}
 	//printf("Clocks per loop: %ld\n", clocksperloop);
 	printf("\nPress any key to begin emulation...\n");
+	//TODO[epic=linux] small implementation
 	#ifdef __WIN32__
 	dummy = _getch();
 	#elif __unix__

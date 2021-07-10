@@ -5,3 +5,5 @@ CMakeFiles
 .vscode
 Makefile
 STM8_LINUX
+run.sh
+build

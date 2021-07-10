@@ -106,8 +106,8 @@ void display_str(int y, int x, char* str) {
     mvprintw(x, y, str); // move to x, y position and print to screen.
     refresh(); // print to terminal.
 }
-void display_init(void) {
-    if (initscr() != 0) { //Start curses mode
+int display_init(void) {
+    if (initscr() == 0) { //Start curses mode
 		return -1; // Error if not enough memory.
 	}
 }

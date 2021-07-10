@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
 #include "stm8s003f3.h"
 #include "../peripherals/clk.h"
 #include "../memory.h"

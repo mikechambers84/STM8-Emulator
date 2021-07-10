@@ -42,9 +42,11 @@ void cpu_reset() {
 	for (i = 0; i < 32; i++) {
 		irq_req[i] = 0;
 	}
-
+	//TODO:[epic=linux] Remove this after linux itegration.
+	/*
 	uart1_init();
 	uart3_init();
+	*/
 	tim2_init();
 	adc_init();
 	clk_init();
