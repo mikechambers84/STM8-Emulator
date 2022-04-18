@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <malloc.h>
 #include "stm8s003f3.h"
 #include "../peripherals/clk.h"
