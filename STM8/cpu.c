@@ -2238,10 +2238,17 @@ int32_t cpu_run(int32_t clocks) {
 			a = result;
 			pc++;
 			break;
-		case 0xA9: //ADC A,#imm8
-			cpu_op_add(a, cpu_imm8() + GET_COND(COND_C));
-			a = result;
-			clocks -= 1;
+		case 0xA9:
+			if(prefix == 0x72) { //ADDW Y,#imm16
+				cpu_op_add16(y, cpu_imm16());
+				y = result16;
+				clocks -= 2;
+			}
+			else { //ADC A,#imm8
+				cpu_op_add(a, cpu_imm8() + GET_COND(COND_C));
+				a = result;
+				clocks -= 1;
+			}
 			pc++;
 			break;
 		case 0xAA: //OR A,#imm8
@@ -3295,13 +3302,23 @@ int32_t cpu_run(int32_t clocks) {
 			clocks -= 1;
 			pc++;
 			break;
-		case 0xF9: //ADC A,(X/Y)
-			if (prefix == 0x90)
+		case 0xF9:
+			if (prefix == 0x72) { //ADDW Y,(addr8,SP)
+				addr = (uint32_t)cpu_imm8() + (uint32_t)sp;
+				cpu_op_add16(y, memory_read16(addr));
+				y = result16;
+				clocks -= 2;
+			}
+			else if (prefix == 0x90) { //ADC A,(Y)
 				cpu_op_add(a, memory_read(y) + GET_COND(COND_C));
-			else
+				a = result;
+				clocks -= 1;
+			}
+			else { //ADC A,(X)
 				cpu_op_add(a, memory_read(x) + GET_COND(COND_C));
-			a = result;
-			clocks -= 1;
+				a = result;
+				clocks -= 1;
+			}
 			pc++;
 			break;
 		case 0xFA:
