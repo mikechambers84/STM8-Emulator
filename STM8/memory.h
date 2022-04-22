@@ -23,6 +23,8 @@ extern uint8_t *CPUREG;
 extern uint32_t flash_size, ram_size, eeprom_size, io_size, cpureg_size;
 extern uint32_t flash_start, ram_start, eeprom_start, io_start, cpureg_start;
 
+extern uint32_t stack_top, stack_bottom;
+
 extern uint32_t ports_start, uart1_start, uart3_start, tim2_start, adc_start, clk_start;
 extern uint32_t ports_end, uart1_end, uart3_end, tim2_end, adc_end, clk_end;
 

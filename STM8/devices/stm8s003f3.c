@@ -20,6 +20,9 @@ void stm8s003f3_init() {
 	ram_start = STM8S003F3_RAM_START;
 	ram_size = STM8S003F3_RAM_SIZE;
 
+	stack_top = ram_start + ram_size - 1;
+	stack_bottom = stack_top - STM8S003F3_STACK_SIZE;
+
 	eeprom_start = STM8S003F3_EEPROM_START;
 	eeprom_size = STM8S003F3_EEPROM_SIZE;
 
