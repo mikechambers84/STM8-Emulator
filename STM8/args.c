@@ -16,6 +16,8 @@
 double speedarg = -1;
 uint8_t showclock = 0, showdisplay = 1, overridecpu = 0, exitonIWDG = 0, disableIWDG = 0;
 char* elffile = NULL;
+char* hexfile = NULL;
+char* srecfile = NULL;
 char* ramfile = NULL;
 char* eepromfile = NULL;
 char* product_name = "null";
@@ -59,9 +61,11 @@ void args_showHelp() {
 	printf("\nEmulation options:\n");
 	printf("  -cpu <model>               Specify CPU model. Use \"-cpu list\" to show available options.\n");
 	printf("  -elf <input file>          Specify ELF file to load and execute.\n");
+	printf("  -hex <input file>          Specify Intel Hex file to load and execute.\n");
+	printf("  -srec <input file>         Specify S-Record file to load and execute.\n");
 	printf("  -eeprom <input file>       Specify EEPROM file to load and save.\n");
 	printf("  -ramdump <input file>      Specify file to dump RAM contents to on exit.\n");
-	printf("  -osc <mhz>                 Specify external oscillator clock speed to emulate in Hz. Default is 24 MHz.\n");
+	printf("  -osc <hz>                  Specify external oscillator clock speed to emulate in Hz. Default is 24 MHz.\n");
 	printf("  -product <product>         Specify product hardware design to emulate.\n");
 	printf("                             Use \"-product list\" to show available options.\n");
 
@@ -125,6 +129,20 @@ int args_parse(int argc, char* argv[]) {
 				return -1;
 			}
 			elffile = argv[++i];
+		}
+		else if(args_isMatch(argv[i], "-hex")) {
+			if((i + 1) == argc) {
+				printf("Parameter required for -hex. Use -h for help.\r\n");
+				return -1;
+			}
+			hexfile = argv[++i];
+		}
+		else if(args_isMatch(argv[i], "-srec")) {
+			if((i + 1) == argc) {
+				printf("Parameter required for -srec. Use -h for help.\r\n");
+				return -1;
+			}
+			srecfile = argv[++i];
 		}
 		else if (args_isMatch(argv[i], "-eeprom")) {
 			if ((i + 1) == argc) {

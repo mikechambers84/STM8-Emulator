@@ -8,6 +8,8 @@
 #include <Windows.h>
 #include "config.h"
 #include "elf.h"
+#include "intelhex.h"
+#include "srec.h"
 #include "memory.h"
 #include "cpu.h"
 #include "peripherals/uart1.h"
@@ -55,14 +57,19 @@ int main(int argc, char* argv[]) {
 	FILE* dumpfile;
 	int dummy;
 
-	printf("STM8 Emulator v0.13 - 2021/03/19\n\n");
+	printf("STM8 Emulator v0.13 - 2022/04/20\n\n");
 
 	if (args_parse(argc, argv)) {
 		return -1;
 	}
 
-	if (elffile == NULL) {
-		printf("An ELF file must be specified. Use -h for help.\n");
+	if (elffile == NULL && hexfile == NULL && srecfile == NULL) {
+		printf("An ELF, Intel Hex, or SREC file must be specified. Use -h for help.\n");
+		return -1;
+	}
+
+	if((elffile != NULL && (hexfile != NULL || srecfile != NULL)) || (hexfile != NULL && (elffile != NULL || srecfile != NULL)) || (srecfile != NULL && (elffile != NULL || hexfile != NULL))) {
+		printf("Cannot specify more than one program file (ELF, Intel Hex, SREC) simultaneously. Use -h for help.\n");
 		return -1;
 	}
 
@@ -73,7 +80,7 @@ int main(int argc, char* argv[]) {
 	printf("       Product: %s\n", product_name);
 	printf("           CPU: %s (Flash = %lu, RAM = %lu, EEPROM = %lu)\n", cpu_name, flash_size, ram_size, eeprom_size);
 	printf("Ext oscillator: %.00f Hz\n", speedarg);
-	printf("      ELF file: %s\n", elffile);
+	printf("  Program file: %s\n", (elffile != NULL) ? elffile : hexfile);
 	printf("   EEPROM file: %s\n", (eepromfile == NULL) ? "[none]" : eepromfile);
 	printf("     Dump file: %s\n", (ramfile == NULL) ? "[none]" : ramfile);
 	printf("         UART1: ");
@@ -91,9 +98,21 @@ int main(int argc, char* argv[]) {
 	case UART3_REDIRECT_TCP: printf("TCP socket redirection (server)\n"); break;
 	}
 
-	if (elf_load(elffile) < 0) {
-		printf("There was an error loading the ELF file.\n");
-		return -1;
+	if(elffile != NULL) {
+		if(elf_load(elffile) < 0) {
+			printf("There was an error loading the ELF file.\n");
+			return -1;
+		}
+	} else if(hexfile != NULL) {
+		if(intelhex_load(hexfile) < 0) {
+			printf("There was an error loading the Intel Hex file.\n");
+			return -1;
+		}
+	} else if(srecfile != NULL) {
+		if(srec_load(srecfile) < 0) {
+			printf("There was an error loading the SREC file.\n");
+			return -1;
+		}
 	}
 	if (eepromfile != NULL) {
 		eeprom_load(eepromfile);

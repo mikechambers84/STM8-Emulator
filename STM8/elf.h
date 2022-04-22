@@ -8,7 +8,6 @@
 
 extern uint8_t endianness;
 
-int elf_load(char* path);
-uint32_t elf_getentry();
+int elf_load(const char* path);
 
 #endif

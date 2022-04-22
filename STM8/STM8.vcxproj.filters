@@ -105,6 +105,12 @@
     <ClCompile Include="peripherals\iwdg.c">
       <Filter>Source Files\peripherals</Filter>
     </ClCompile>
+    <ClCompile Include="intelhex.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="srec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="elf.h">
@@ -172,6 +178,15 @@
     </ClInclude>
     <ClInclude Include="peripherals\iwdg.h">
       <Filter>Header Files\peripherals</Filter>
+    </ClInclude>
+    <ClInclude Include="intelhex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="endian.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="srec.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

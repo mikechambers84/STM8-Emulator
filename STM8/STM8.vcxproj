@@ -152,6 +152,7 @@
     <ClCompile Include="display.c" />
     <ClCompile Include="elf.c" />
     <ClCompile Include="hardware\casil.c" />
+    <ClCompile Include="intelhex.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="memory.c" />
     <ClCompile Include="peripherals\adc.c" />
@@ -163,6 +164,7 @@
     <ClCompile Include="ports.c" />
     <ClCompile Include="products\null.c" />
     <ClCompile Include="serial.c" />
+    <ClCompile Include="srec.c" />
     <ClCompile Include="tcpconsole.c" />
     <ClCompile Include="timing.c" />
   </ItemGroup>
@@ -176,7 +178,9 @@
     <ClInclude Include="devices\stm8s207s6.h" />
     <ClInclude Include="display.h" />
     <ClInclude Include="elf.h" />
+    <ClInclude Include="endian.h" />
     <ClInclude Include="hardware\casil.h" />
+    <ClInclude Include="intelhex.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="peripherals\adc.h" />
     <ClInclude Include="peripherals\clk.h" />
@@ -187,6 +191,7 @@
     <ClInclude Include="ports.h" />
     <ClInclude Include="products\null.h" />
     <ClInclude Include="serial.h" />
+    <ClInclude Include="srec.h" />
     <ClInclude Include="tcpconsole.h" />
     <ClInclude Include="timing.h" />
   </ItemGroup>
