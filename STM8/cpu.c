@@ -2253,17 +2253,13 @@ int32_t cpu_run(int32_t clocks) {
 			break;
 		case 0xAC:
 			if (prefix == 0x92) {  //JPF [longptr.e]
-				//TODO: There's a bug in here somewhere?
-				//printf("pc = %08X    ", pc);
 				addr = cpu_imm16();
-				//printf("addr = %08X    ", addr);
 				pc = memory_read(addr);
 				pc <<= 8;
-				pc |= (uint32_t)memory_read(addr++);
+				pc |= (uint32_t)memory_read(++addr);
 				pc <<= 8;
-				pc |= (uint32_t)memory_read(addr++);
-				//printf("JPF %08X\n", pc);
-				//exit(0);
+				pc |= (uint32_t)memory_read(++addr);
+				clocks -= 6;
 			}
 			else { //JPF addr24
 				addr = cpu_imm8();
@@ -2272,6 +2268,7 @@ int32_t cpu_run(int32_t clocks) {
 				addr <<= 8;
 				addr |= (uint32_t)cpu_imm8();
 				pc = addr;
+				clocks -= 2;
 			}
 			break;
 		case 0xAD: //CALLR
