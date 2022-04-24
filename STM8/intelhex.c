@@ -8,7 +8,7 @@
 #include "endian.h"
 #include "intelhex.h"
 
-#define IHEX_DETAIL
+// #define IHEX_DETAIL
 
 // Nominal max length in characters of a record is 521 (excluding line breaks
 // and terminating null).

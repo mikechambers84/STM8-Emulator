@@ -8,7 +8,7 @@
 #include "endian.h"
 #include "srec.h"
 
-#define SREC_DETAIL
+// #define SREC_DETAIL
 
 // Nominal max length in characters of a record is 514 (excluding line breaks
 // and terminating null).
