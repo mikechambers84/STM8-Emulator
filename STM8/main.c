@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
 	printf("       Product: %s\n", product_name);
 	printf("           CPU: %s (Flash = %lu, RAM = %lu, EEPROM = %lu)\n", cpu_name, flash_size, ram_size, eeprom_size);
 	printf("Ext oscillator: %.00f Hz\n", speedarg);
-	printf("  Program file: %s\n", (elffile != NULL) ? elffile : hexfile);
+	printf("  Program file: %s\n", (elffile != NULL) ? elffile : ((hexfile != NULL) ? hexfile : srecfile));
 	printf("   EEPROM file: %s\n", (eepromfile == NULL) ? "[none]" : eepromfile);
 	printf("     Dump file: %s\n", (ramfile == NULL) ? "[none]" : ramfile);
 	printf("         UART1: ");
