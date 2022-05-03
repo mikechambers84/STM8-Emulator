@@ -24,7 +24,6 @@ uint32_t pc;
 uint16_t sp, x, y;
 uint8_t a, cc;
 
-
 //helper variables
 uint8_t opcode, valid, result, prefix, running, halt;
 uint16_t result16;
@@ -2234,12 +2233,7 @@ int32_t cpu_run(int32_t clocks) {
 			clocks -= 4;
 			break;
 		case 0x82: //INT
-			// TODO: change to use cpu_imm24()?
-			addr = memory_read(pc + 1);
-			addr <<= 8;
-			addr |= memory_read(pc + 2);
-			addr <<= 8;
-			addr |= memory_read(pc + 3);
+			addr = cpu_imm24();
 			clocks -= 2;
 			pc = addr;
 			break;
@@ -2321,7 +2315,6 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0x8D:
-			// TODO: change to use cpu_imm24()?
 			if (prefix == 0x92) { //CALLF [longptr.e]
 				val16 = cpu_imm16();
 				addr = memory_read(val16++);
@@ -2332,11 +2325,7 @@ int32_t cpu_run(int32_t clocks) {
 				clocks -= 8;
 			}
 			else { //CALLF addr24
-				addr = memory_read(++pc);
-				addr <<= 8;
-				addr |= memory_read(++pc);
-				addr <<= 8;
-				addr |= memory_read(++pc);
+				addr = cpu_imm24();
 				clocks -= 5;
 			}
 			pc++;
@@ -2540,8 +2529,7 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0xAC:
-			// TODO: change to use cpu_imm24()?
-			if (prefix == 0x92) {  //JPF [longptr.e]
+			if (prefix == 0x92) { //JPF [longptr.e]
 				addr = cpu_imm16();
 				pc = memory_read(addr);
 				pc <<= 8;
@@ -2551,11 +2539,7 @@ int32_t cpu_run(int32_t clocks) {
 				clocks -= 6;
 			}
 			else { //JPF addr24
-				addr = cpu_imm8();
-				addr <<= 8;
-				addr |= (uint32_t)cpu_imm8();
-				addr <<= 8;
-				addr |= (uint32_t)cpu_imm8();
+				addr = cpu_imm24();
 				pc = addr;
 				clocks -= 2;
 			}
