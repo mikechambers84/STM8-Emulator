@@ -6,6 +6,8 @@
 extern double speedarg;
 extern uint8_t showclock, showdisplay, overridecpu, exitonIWDG, disableIWDG;
 extern char* elffile;
+extern char* hexfile;
+extern char* srecfile;
 extern char* ramfile;
 extern char* eepromfile;
 extern char* product_name;

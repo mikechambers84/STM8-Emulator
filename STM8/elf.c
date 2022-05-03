@@ -4,81 +4,22 @@
 #include "memory.h"
 #include "elf.h"
 
+// TODO: clean up this code.
+// - Don't dynamically malloc() using size values straight from external data! Sanity-check sizes first.
+// - Use endian.h macros to handle endianness of values (and get rid of swap16(), swap32()).
+// - Define readable constants for ELF header offsets.
+
 //#define ELF_DETAIL
 
 uint32_t elf_entrypoint = 0;
 uint8_t endianness;
 
-const char* elf_abi[0x13] = {
-	"System V",
-	"HP - UX",
-	"NetBSD",
-	"Linux",
-	"GNU Hurd",
-	"Unknown",
-	"Solaris",
-	"AIX",
-	"IRIX",
-	"FreeBSD",
-	"Tru64",
-	"Novell Modesto",
-	"OpenBSD",
-	"OpenVMS",
-	"NonStop Kernel",
-	"AROS",
-	"Fenix OS",
-	"CloudABI",
-	"Stratus Technologies OpenVOS",
-};
-
-typedef struct {
-	uint8_t val;
-	char* name;
-} ISA_t;
-
-const ISA_t elf_isa[23] = {
-	{ 0x00,	"No specific instruction set" },
-	{ 0x01,	"AT&T WE 32100" },
-	{ 0x02,	"SPARC" },
-	{ 0x03,	"x86" },
-	{ 0x04,	"Motorola 68000 (M68k)" },
-	{ 0x05,	"Motorola 88000 (M88k)" },
-	{ 0x06,	"Intel MCU" },
-	{ 0x07,	"Intel 80860" },
-	{ 0x08,	"MIPS" },
-	{ 0x09,	"IBM_System / 370" },
-	{ 0x0A,	"MIPS RS3000 Little - endian" },
-	{ 0x0E,	"Hewlett - Packard PA - RISC" },
-	{ 0x13,	"Intel 80960" },
-	{ 0x14,	"PowerPC" },
-	{ 0x15,	"PowerPC(64 - bit)" },
-	{ 0x16,	"S390, including S390x" },
-	{ 0x28,	"ARM(up to ARMv7)" },
-	{ 0x2A,	"SuperH" },
-	{ 0x32,	"IA - 64" },
-	{ 0x3E,	"amd64" },
-	{ 0x8C,	"TMS320C6000 Family" },
-	{ 0xB7,	"ARM 64 - bits(ARMv8 / Aarch64)" },
-	{ 0xF3,	"RISC - V" }
-};
-
-char* elf_strisa(uint8_t val) {
-	int i;
-	for (i = 0; i < 23; i++) {
-		if (elf_isa[i].val == val) {
-			return elf_isa[i].name;
-		}
-	}
-	return "Unknown";
-}
-
-int elf_load(char* path) {
+int elf_load(const char* path) {
 	FILE* elf;
 	long fsz;
 	uint8_t hdr[52], * phdr = NULL, * shdr = NULL, * chunk = NULL, * strtab = NULL;
 	uint16_t phdrnum, phdrsize, shdrnum, shdrsize;
 	uint32_t i, j, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align;
-	//uint32_t sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_addralign;
 
 	elf = fopen(path, "rb");
 	if (elf == NULL) {
@@ -158,9 +99,7 @@ int elf_load(char* path) {
 	}
 	free(phdr);
 
-	return 0;
-}
+	fclose(elf);
 
-uint32_t elf_getentry() {
-	return elf_entrypoint;
+	return 0;
 }
