@@ -489,6 +489,14 @@ FUNC_INLINE uint32_t cpu_addr_longptr_indexed_y() {
 	return (uint32_t)memory_read16(cpu_imm16()) + (uint32_t)y;
 }
 
+FUNC_INLINE uint32_t cpu_addr_longptr_ext_indexed_x() {
+	return memory_read24(cpu_imm16()) + (uint32_t)x;
+}
+
+FUNC_INLINE uint32_t cpu_addr_longptr_ext_indexed_y() {
+	return memory_read24(cpu_imm16()) + (uint32_t)y;
+}
+
 FUNC_INLINE uint32_t cpu_addr_short_offset_indexed_x() {
 	return (uint32_t)cpu_imm8() + (uint32_t)x; // ((uint32_t)x & 0xFF);
 }
@@ -503,6 +511,10 @@ FUNC_INLINE uint32_t cpu_addr_long_offset_indexed_x() {
 
 FUNC_INLINE uint32_t cpu_addr_long_offset_indexed_y() {
 	return (uint32_t)cpu_imm16() + (uint32_t)y;
+}
+
+FUNC_INLINE uint32_t cpu_addr_longptr_ext() {
+	return memory_read24(cpu_imm16());
 }
 
 FUNC_INLINE uint32_t cpu_addr_longptr() {
@@ -2316,12 +2328,7 @@ int32_t cpu_run(int32_t clocks) {
 			break;
 		case 0x8D:
 			if (prefix == 0x92) { //CALLF [longptr.e]
-				val16 = cpu_imm16();
-				addr = memory_read(val16++);
-				addr <<= 8;
-				addr |= memory_read(val16++);
-				addr <<= 8;
-				addr |= memory_read(val16);
+				addr = cpu_addr_longptr_ext();
 				clocks -= 8;
 			}
 			else { //CALLF addr24
@@ -2476,15 +2483,11 @@ int32_t cpu_run(int32_t clocks) {
 			break;
 		case 0xA7:
 			if (prefix == 0x91) { //LDF ([longptr.e],Y),A
-				addr = cpu_imm16();
-				addr = ((uint32_t)memory_read(addr) << 16) | ((uint32_t)memory_read(addr + 1) << 8) | (uint32_t)memory_read(addr);
-				addr += (uint32_t)y;
+				addr = cpu_addr_longptr_ext_indexed_y();
 				clocks -= 4;
 			}
 			else if (prefix == 0x92) { //LDF ([longptr.e],X),A
-				addr = cpu_imm16();
-				addr = ((uint32_t)memory_read(addr) << 16) | ((uint32_t)memory_read(addr + 1) << 8) | (uint32_t)memory_read(addr);
-				addr += (uint32_t)x;
+				addr = cpu_addr_longptr_ext_indexed_x();
 				clocks -= 4;
 			}
 			else if (prefix == 0x90) { //LDF (addr24,Y),A
@@ -2530,12 +2533,8 @@ int32_t cpu_run(int32_t clocks) {
 			break;
 		case 0xAC:
 			if (prefix == 0x92) { //JPF [longptr.e]
-				addr = cpu_imm16();
-				pc = memory_read(addr);
-				pc <<= 8;
-				pc |= (uint32_t)memory_read(++addr);
-				pc <<= 8;
-				pc |= (uint32_t)memory_read(++addr);
+				addr = cpu_addr_longptr_ext();
+				pc = addr;
 				clocks -= 6;
 			}
 			else { //JPF addr24
@@ -2564,15 +2563,11 @@ int32_t cpu_run(int32_t clocks) {
 			break;
 		case 0xAF:
 			if (prefix == 0x91) { //LDF A,([longptr.e],Y)
-				addr = cpu_imm16();
-				addr = ((uint32_t)memory_read(addr) << 16) | ((uint32_t)memory_read(addr + 1) << 8) | (uint32_t)memory_read(addr);
-				addr += (uint32_t)y;
+				addr = cpu_addr_longptr_ext_indexed_y();
 				clocks -= 5;
 			}
 			else if (prefix == 0x92) { //LDF A,([longptr.e],X)
-				addr = cpu_imm16();
-				addr = ((uint32_t)memory_read(addr) << 16) | ((uint32_t)memory_read(addr + 1) << 8) | (uint32_t)memory_read(addr);
-				addr += (uint32_t)x;
+				addr = cpu_addr_longptr_ext_indexed_x();
 				clocks -= 5;
 			}
 			else if (prefix == 0x90) { //LDF A,(addr24,Y)
@@ -2691,8 +2686,7 @@ int32_t cpu_run(int32_t clocks) {
 			break;
 		case 0xBC:
 			if (prefix == 0x92) { //LDF A,[longptr.e]
-				addr = cpu_imm16();
-				addr = ((uint32_t)memory_read(addr) << 16) | ((uint32_t)memory_read(addr + 1) << 8) | (uint32_t)memory_read(addr);
+				addr = cpu_addr_longptr_ext();
 				clocks -= 5;
 			}
 			else { //LDF A,addr24
@@ -2705,8 +2699,7 @@ int32_t cpu_run(int32_t clocks) {
 			break;
 		case 0xBD:
 			if (prefix == 0x92) { //LDF [longptr.e],A
-				addr = cpu_imm16();
-				addr = ((uint32_t)memory_read(addr) << 16) | ((uint32_t)memory_read(addr + 1) << 8) | (uint32_t)memory_read(addr);
+				addr = cpu_addr_longptr_ext();
 				clocks -= 4;
 			}
 			else { //LDF addr24,A
