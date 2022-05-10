@@ -24,7 +24,6 @@ uint32_t pc;
 uint16_t sp, x, y;
 uint8_t a, cc;
 
-
 //helper variables
 uint8_t opcode, valid, result, prefix, running, halt;
 uint16_t result16;
@@ -490,6 +489,14 @@ FUNC_INLINE uint32_t cpu_addr_longptr_indexed_y() {
 	return (uint32_t)memory_read16(cpu_imm16()) + (uint32_t)y;
 }
 
+FUNC_INLINE uint32_t cpu_addr_longptr_ext_indexed_x() {
+	return memory_read24(cpu_imm16()) + (uint32_t)x;
+}
+
+FUNC_INLINE uint32_t cpu_addr_longptr_ext_indexed_y() {
+	return memory_read24(cpu_imm16()) + (uint32_t)y;
+}
+
 FUNC_INLINE uint32_t cpu_addr_short_offset_indexed_x() {
 	return (uint32_t)cpu_imm8() + (uint32_t)x; // ((uint32_t)x & 0xFF);
 }
@@ -506,6 +513,10 @@ FUNC_INLINE uint32_t cpu_addr_long_offset_indexed_y() {
 	return (uint32_t)cpu_imm16() + (uint32_t)y;
 }
 
+FUNC_INLINE uint32_t cpu_addr_longptr_ext() {
+	return memory_read24(cpu_imm16());
+}
+
 FUNC_INLINE uint32_t cpu_addr_longptr() {
 	return memory_read16(cpu_imm16());
 }
@@ -515,7 +526,7 @@ FUNC_INLINE uint32_t cpu_addr_shortptr() {
 }
 
 int32_t cpu_run(int32_t clocks) {
-	uint8_t val, oldcc;
+	uint8_t val;
 	uint16_t val16;
 	int32_t startclocks; //temporary thing until i finish adding all proper clock timings...
 
@@ -674,7 +685,6 @@ int32_t cpu_run(int32_t clocks) {
 			memory_write(addr, result);
 			pc++;
 			break;
-
 		case 0x06: //RRC (addr8,SP)
 			addr = cpu_addr_indexed_sp();
 			cpu_op_rrc(memory_read(addr));
@@ -751,6 +761,7 @@ int32_t cpu_run(int32_t clocks) {
 		case 0x13: //CPW X,(addr8,SP)
 			addr = cpu_addr_indexed_sp();
 			cpu_op_sub16(x, memory_read16(addr));
+			clocks -= 2;
 			pc++;
 			break;
 		case 0x14: //AND A,(addr8,SP)
@@ -770,12 +781,14 @@ int32_t cpu_run(int32_t clocks) {
 			addr = cpu_addr_indexed_sp();
 			y = memory_read16(addr);
 			cpu_flags_logic16(y);
+			clocks -= 2;
 			pc++;
 			break;
 		case 0x17: //LDW (addr8,SP),Y
 			addr = cpu_addr_indexed_sp();
 			memory_write16(addr, y);
 			cpu_flags_logic16(y);
+			clocks -= 2;
 			pc++;
 			break;
 		case 0x18: //XOR A,(addr8,SP)
@@ -815,154 +828,221 @@ int32_t cpu_run(int32_t clocks) {
 		case 0x1D: //SUBW X,#imm16
 			cpu_op_sub16(x, cpu_imm16());
 			x = result16;
+			clocks -= 2;
 			pc++;
 			break;
 		case 0x1E: //LDW X,(addr8,SP)
 			addr = cpu_addr_indexed_sp();
 			x = memory_read16(addr);
 			cpu_flags_logic16(x);
+			clocks -= 2;
 			pc++;
 			break;
 		case 0x1F: //LDW (addr8,SP),X
 			addr = cpu_addr_indexed_sp();
 			memory_write16(addr, x);
 			cpu_flags_logic16(x);
+			clocks -= 2;
 			pc++;
 			break;
-		case 0x20: //JRA
+		case 0x20: //JRA/JRT
 			addr = cpu_soff8();
-			//printf("JRA %ld\n", addr);
+			clocks -= 2;
 			pc = pc + addr + 1;
 			break;
 		case 0x21: //JRF
+			clocks -= 1;
 			pc += 2; //branch never, but still need to increment PC
 			break;
 		case 0x22: //JRUGT
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
-			if (!GET_COND(COND_C) && !GET_COND(COND_Z))
+			if(!GET_COND(COND_C) && !GET_COND(COND_Z)) {
+				clocks -= 1;
 				pc = pc + addr;
+			}
 			break;
 		case 0x23: //JRULE
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
-			if (GET_COND(COND_C) || GET_COND(COND_Z))
+			if(GET_COND(COND_C) || GET_COND(COND_Z)) {
+				clocks -= 1;
 				pc = pc + addr;
+			}
 			break;
-		case 0x24: //JRNC
+		case 0x24: //JRNC/JRUGE
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
-			if (!GET_COND(COND_C))
+			if(!GET_COND(COND_C)) {
+				clocks -= 1;
 				pc = pc + addr;
+			}
 			break;
 		case 0x25: //JRULT/JRC
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
-			if (GET_COND(COND_C))
+			if(GET_COND(COND_C)) {
+				clocks -= 1;
 				pc = pc + addr;
+			}
 			break;
 		case 0x26: //JRNE
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
-			if (!GET_COND(COND_Z))
+			if(!GET_COND(COND_Z)) {
+				clocks -= 1;
 				pc = pc + addr;
+			}
 			break;
 		case 0x27: //JREQ
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
-			if (GET_COND(COND_Z))
+			if(GET_COND(COND_Z)) {
+				clocks -= 1;
 				pc = pc + addr;
+			}
 			break;
 		case 0x28:
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
 			if (prefix == 90) { //JRNH
-				if (!GET_COND(COND_H))
+				if(!GET_COND(COND_H)) {
+					clocks -= 1;
 					pc = pc + addr;
+				}
 			}
 			else { //JRNV
-				if (!GET_COND(COND_V))
+				if(!GET_COND(COND_V)) {
+					clocks -= 1;
 					pc = pc + addr;
+				}
 			}
 			break;
 		case 0x29:
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
 			if (prefix == 90) { //JRH
-				if (GET_COND(COND_H))
+				if(GET_COND(COND_H)) {
+					clocks -= 1;
 					pc = pc + addr;
+				}
 			}
 			else { //JRV
-				if (GET_COND(COND_V))
+				if(GET_COND(COND_V)) {
+					clocks -= 1;
 					pc = pc + addr;
+				}
 			}
 			break;
 		case 0x2A: //JRPL
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
-			if (!GET_COND(COND_N))
+			if(!GET_COND(COND_N)) {
+				clocks -= 1;
 				pc = pc + addr;
+			}
 			break;
 		case 0x2B: //JRMI
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
-			if (GET_COND(COND_N))
+			if(GET_COND(COND_N)) {
+				clocks -= 1;
 				pc = pc + addr;
+			}
 			break;
 		case 0x2C:
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
 			if (prefix == 90) { //JRNM
-				if (!(GET_COND(COND_I0) || GET_COND(COND_I1)))
+				if(!(GET_COND(COND_I0) || GET_COND(COND_I1))) {
+					clocks -= 1;
 					pc = pc + addr;
+				}
 			}
 			else { //JRSGT
-				if (!GET_COND(COND_N) && (GET_COND(COND_N) == GET_COND(COND_V)))
+				// TODO: check, condition doesn't match datasheet
+				if(!GET_COND(COND_N) && (GET_COND(COND_N) == GET_COND(COND_V))) {
+					clocks -= 1;
 					pc = pc + addr;
+				}
 			}
 			break;
 		case 0x2D:
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
 			if (prefix == 90) { //JRM
-				if (GET_COND(COND_I0) || GET_COND(COND_I1))
+				if(GET_COND(COND_I0) || GET_COND(COND_I1)) {
+					clocks -= 1;
 					pc = pc + addr;
+				}
 			}
 			else { //JRSLE
-				if (GET_COND(COND_N) || (GET_COND(COND_N) ^ GET_COND(COND_V)))
+				// TODO: check, condition doesn't match datasheet
+				if(GET_COND(COND_N) || (GET_COND(COND_N) ^ GET_COND(COND_V))) {
+					clocks -= 1;
 					pc = pc + addr;
+				}
 			}
 			break;
 		case 0x2E:
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
 			if (prefix == 90) { //JRIL
-				//TODO: interrupt line, for now always act as if low
+				// This instruction doesn't actually work according to errata.
+				// JRIL is equivalent to an unconditional jump.
+				// See ES0110, ES0102, or ES036 documents section 2.1.2.
+				clocks -= 1;
 				pc = pc + addr;
 			}
 			else { //JRSGE
-				if ((GET_COND(COND_N) ^ GET_COND(COND_V)) == 0)
+				if((GET_COND(COND_N) ^ GET_COND(COND_V)) == 0) {
+					clocks -= 1;
 					pc = pc + addr;
+				}
 			}
 			break;
 		case 0x2F:
 			addr = cpu_soff8();
+			clocks -= 1;
 			pc++;
 			if (prefix == 90) { //JRIH
-				//TODO: interrupt line, for now always act as if low
+				// This instruction doesn't actually work according to errata.
+				// JRIH is equivalent to NOP.
+				// See ES0110, ES0102, or ES036 documents section 2.1.2.
 			}
-			else { //JRSGE
-				if (GET_COND(COND_N) ^ GET_COND(COND_V))
+			else { //JRSLT
+				if(GET_COND(COND_N) ^ GET_COND(COND_V)) {
+					clocks -= 1;
 					pc = pc + addr;
+				}
 			}
 			break;
 		case 0x30:
-			if (prefix == 0x72) //NEG [longptr.w]
+			if(prefix == 0x72) { //NEG [longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //NEG [shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //NEG [shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //NEG addr8
+				clocks -= 4;
+			}
+			else { //NEG addr8
 				addr = cpu_imm8();
+				clocks -= 1;
+			}
 			val = memory_read(addr);
 			cpu_op_add(val ^ 0xFF, 1);
 			memory_write(addr, result);
@@ -973,6 +1053,7 @@ int32_t cpu_run(int32_t clocks) {
 			val = a;
 			a = memory_read(addr);
 			memory_write(addr, a);
+			clocks -= 3;
 			pc++;
 			break;
 		case 0x32: //POP addr16
@@ -982,12 +1063,18 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0x33:
-			if (prefix == 0x72) //CPL [longptr.w]
+			if(prefix == 0x72) { //CPL [longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //CPL [shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //CPL [shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //CPL addr8
+				clocks -= 4;
+			}
+			else { //CPL addr8
 				addr = cpu_imm8();
+				clocks -= 1;
+			}
 			result = memory_read(addr) ^ 0xFF;
 			cpu_flags_logic(result);
 			memory_write(addr, result);
@@ -995,12 +1082,18 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0x34:
-			if (prefix == 0x72) //CPL [longptr.w]
+			if(prefix == 0x72) { //SRL [longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //CPL [shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //SRL [shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //CPL addr8
+				clocks -= 4;
+			}
+			else { //SRL addr8
 				addr = cpu_imm8();
+				clocks -= 1;
+			}
 			cpu_op_srl(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
@@ -1012,56 +1105,86 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0x36:
-			if (prefix == 0x72) //RRC [longptr.w]
+			if(prefix == 0x72) { //RRC [longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //RRC [shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //RRC [shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //RRC addr8
+				clocks -= 4;
+			}
+			else { //RRC addr8
 				addr = cpu_imm8();
+				clocks -= 1;
+			}
 			cpu_op_rrc(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
 			break;
 		case 0x37:
-			if (prefix == 0x72) //SRA [longptr.w]
+			if(prefix == 0x72) { //SRA [longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //SRA [shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //SRA [shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //SLL addr8
+				clocks -= 4;
+			}
+			else { //SRA addr8
 				addr = cpu_imm8();
+				clocks -= 1;
+			}
 			cpu_op_sra(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
 			break;
 		case 0x38:
-			if (prefix == 0x72) //SLL [longptr.w]
+			if(prefix == 0x72) { //SLL [longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //SLL [shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //SLL [shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //SLL addr8
+				clocks -= 4;
+			}
+			else { //SLL addr8
 				addr = cpu_imm8();
+				clocks -= 1;
+			}
 			cpu_op_sll(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
 			break;
 		case 0x39:
-			if (prefix == 0x72) //RLC [longptr.w]
+			if(prefix == 0x72) { //RLC [longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //RLC [shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //RLC [shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //RLC addr8
+				clocks -= 4;
+			}
+			else { //RLC addr8
 				addr = cpu_imm8();
+				clocks -= 1;
+			}
 			cpu_op_rlc(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
 			break;
 		case 0x3A:
-			if (prefix == 0x72) //DEC [longptr.w]
+			if(prefix == 0x72) { //DEC [longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //DEC [shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //DEC [shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //DEC addr8
+				clocks -= 4;
+			}
+			else { //DEC addr8
 				addr = cpu_imm8();
+				clocks -= 1;
+			}
 			cpu_op_dec(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
@@ -1071,36 +1194,52 @@ int32_t cpu_run(int32_t clocks) {
 			cpu_push(memory_read(addr));
 			pc++;
 			break;
-		case 0x3C: //TODO: Is this right?
-			oldcc = cc;
-			if (prefix == 0x72) //INC [longptr.w]
+		case 0x3C:
+			if(prefix == 0x72) { //INC [longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //INC [shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //INC [shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //INC addr8
+				clocks -= 4;
+			}
+			else { //INC addr8
 				addr = cpu_imm8();
+				clocks -= 1;
+			}
 			cpu_op_inc(memory_read(addr));
 			memory_write(addr, result);
-			cc = (cc & ~COND_C) | (oldcc & COND_C);
 			pc++;
 			break;
 		case 0x3D:
-			if (prefix == 0x72) //TNZ [longptr.w]
+			if(prefix == 0x72) { //TNZ [longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //TNZ [shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //TNZ [shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //TNZ addr8
+				clocks -= 4;
+			}
+			else { //TNZ addr8
 				addr = cpu_imm8();
+				clocks -= 1;
+			}
 			cpu_flags_logic(memory_read(addr));
 			pc++;
 			break;
 		case 0x3E:
-			if (prefix == 0x72) //SWAP [longptr.w]
+			if(prefix == 0x72) { //SWAP [longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //SWAP [shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //SWAP [shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //SWAP addr8
+				clocks -= 4;
+			}
+			else { //SWAP addr8
 				addr = cpu_imm8();
+				clocks -= 1;
+			}
 			cpu_op_swap(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
@@ -1153,6 +1292,7 @@ int32_t cpu_run(int32_t clocks) {
 				x = (x & 0x00FF) * (uint16_t)a;
 			CLEAR_COND(COND_H); //TODO: Verify this...
 			CLEAR_COND(COND_C);
+			clocks -= 4;
 			pc++;
 			break;
 		case 0x43:
@@ -1362,14 +1502,17 @@ int32_t cpu_run(int32_t clocks) {
 				val = memory_read(addr);
 				cpu_op_add(val ^ 0xFF, 1);
 				memory_write(addr, result);
+				clocks -= 1;
 			}
 			else if (prefix == 0x90) { //NEGW Y
 				cpu_op_add16(y ^ 0xFFFF, 1);
 				y = result16;
+				clocks -= 2;
 			}
 			else { //NEGW X
 				cpu_op_add16(x ^ 0xFFFF, 1);
 				x = result16;
+				clocks -= 2;
 			}
 			pc++;
 			break;
@@ -1392,14 +1535,17 @@ int32_t cpu_run(int32_t clocks) {
 				result = memory_read(addr) ^ 0xFF;
 				memory_write(addr, result);
 				cpu_flags_logic(result);
+				clocks -= 1;
 			}
 			else if (prefix == 0x90) { //CPLW Y
 				y ^= 0xFFFF;
 				cpu_flags_logic16(y);
+				clocks -= 2;
 			}
 			else { //CPLW X
 				x ^= 0xFFFF;
 				cpu_flags_logic16(x);
+				clocks -= 2;
 			}
 			SET_COND(COND_C);
 			pc++;
@@ -1409,14 +1555,17 @@ int32_t cpu_run(int32_t clocks) {
 				addr = cpu_imm16();
 				cpu_op_srl(memory_read(addr));
 				memory_write(addr, result);
+				clocks -= 1;
 			}
 			else if (prefix == 0x90) { //SRLW Y
 				cpu_op_srlw(y);
 				y = result16;
+				clocks -= 2;
 			}
 			else { //SRLW X
 				cpu_op_srlw(x);
 				x = result16;
+				clocks -= 2;
 			}
 			pc++;
 			break;
@@ -1433,14 +1582,17 @@ int32_t cpu_run(int32_t clocks) {
 				val = memory_read(addr);
 				cpu_op_rrc(val);
 				memory_write(addr, result);
+				clocks -= 1;
 			}
 			else if (prefix == 0x90) { //RRCW Y
 				cpu_op_rrcw(y);
 				y = result16;
+				clocks -= 2;
 			}
 			else { //RRCW X
 				cpu_op_rrcw(x);
 				x = result16;
+				clocks -= 2;
 			}
 			pc++;
 			break;
@@ -1450,14 +1602,17 @@ int32_t cpu_run(int32_t clocks) {
 				val = memory_read(addr);
 				cpu_op_sra(val);
 				memory_write(addr, result);
+				clocks -= 1;
 			}
 			else if (prefix == 0x90) { //SRAW Y
 				cpu_op_sraw(y);
 				y = result16;
+				clocks -= 2;
 			}
 			else { //SRAW X
 				cpu_op_sraw(x);
 				x = result16;
+				clocks -= 2;
 			}
 			pc++;
 			break;
@@ -1467,14 +1622,17 @@ int32_t cpu_run(int32_t clocks) {
 				val = memory_read(addr);
 				cpu_op_sll(val);
 				memory_write(addr, result);
+				clocks -= 1;
 			}
 			else if (prefix == 0x90) { //SLLW Y
 				cpu_op_sllw(y);
 				y = result16;
+				clocks -= 2;
 			}
 			else { //SLLW X
 				cpu_op_sllw(x);
 				x = result16;
+				clocks -= 2;
 			}
 			pc++;
 			break;
@@ -1484,14 +1642,17 @@ int32_t cpu_run(int32_t clocks) {
 				val = memory_read(addr);
 				cpu_op_rlc(val);
 				memory_write(addr, result);
+				clocks -= 1;
 			}
 			else if (prefix == 0x90) { //RLCW Y
 				cpu_op_rlcw(y);
 				y = result16;
+				clocks -= 2;
 			}
 			else { //RLCW X
 				cpu_op_rlcw(x);
 				x = result16;
+				clocks -= 2;
 			}
 			pc++;
 			break;
@@ -1539,12 +1700,15 @@ int32_t cpu_run(int32_t clocks) {
 				addr = cpu_imm16();
 				val = memory_read(addr);
 				cpu_flags_logic(val);
+				clocks -= 1;
 			}
 			else if (prefix == 0x90) { //TNZW Y
 				cpu_flags_logic16(y);
+				clocks -= 2;
 			}
 			else { //TNZW X
 				cpu_flags_logic16(x);
+				clocks -= 2;
 			}
 			pc++;
 			break;
@@ -1577,16 +1741,26 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0x60:
-			if (prefix == 0x91) //NEG ([shortptr.w],Y)
+			if(prefix == 0x91) { //NEG ([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x92) //NEG ([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //NEG ([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x72) //NEG ([longptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x72) { //NEG ([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x90) //NEG (addr8,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //NEG (addr8,Y)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)y;
-			else //NEG (addr8,X)
+				clocks -= 1;
+			}
+			else { //NEG (addr8,X)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
+				clocks -= 1;
+			}
 			val = memory_read(addr);
 			cpu_op_add(val ^ 0xFF, 1);
 			memory_write(addr, result);
@@ -1615,20 +1789,34 @@ int32_t cpu_run(int32_t clocks) {
 					x = quotient;
 				a = (uint8_t)remainder;
 			}
+			// Instruction actually takes variable number of cycles, 2-17,
+			// depending on values of operands. Until we know exactly how that
+			// works, just use somewhere in the middle as a rough estimate.
+			clocks -= 8;
 			pc++;
 			break;
 		}
 		case 0x63:
-			if (prefix == 0x91) //CPL ([shortptr.w],Y)
+			if(prefix == 0x91) { //CPL ([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x72) //CPL ([longptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x72) { //CPL ([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x92) //CPL ([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //CPL ([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //CPL (addr8,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //CPL (addr8,Y)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)y;
-			else //CPL (addr8,X)
+				clocks -= 1;
+			}
+			else { //CPL (addr8,X)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
+				clocks -= 1;
+			}
 			result = memory_read(addr) ^ 0xFF;
 			cpu_flags_logic(result);
 			memory_write(addr, result);
@@ -1636,16 +1824,26 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0x64:
-			if (prefix == 0x91) //SRL ([shortptr.w],Y)
+			if(prefix == 0x91) { //SRL ([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x72) //SRL ([longptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x72) { //SRL ([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x92) //SRL ([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //SRL ([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //SRL (addr8,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //SRL (addr8,Y)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)y;
-			else //SRL (addr8,X)
+				clocks -= 1;
+			}
+			else { //SRL (addr8,X)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
+				clocks -= 1;
+			}
 			cpu_op_srl(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
@@ -1664,80 +1862,134 @@ int32_t cpu_run(int32_t clocks) {
 				x = tx;
 				y = ty;
 			}
+			// Instruction actually takes variable number of cycles, 2-17,
+			// depending on values of operands. Until we know exactly how that
+			// works, just use somewhere in the middle as a rough estimate.
+			clocks -= 8;
 			pc++;
 			break;
 		}
 		case 0x66:
-			if (prefix == 0x91) //RRC ([shortptr.w],Y)
+			if(prefix == 0x91) { //RRC ([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x72) //RRC ([longptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x72) { //RRC ([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x92) //RRC ([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //RRC ([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //RRC (addr8,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //RRC (addr8,Y)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)y;
-			else //RRC (addr8,X)
+				clocks -= 1;
+			}
+			else { //RRC (addr8,X)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
+				clocks -= 1;
+			}
 			cpu_op_rrc(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
 			break;
 		case 0x67:
-			if (prefix == 0x91) //SRA ([shortptr.w],Y)
+			if(prefix == 0x91) { //SRA ([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x72) //SRA ([longptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x72) { //SRA ([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x92) //SRA ([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //SRA ([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //SRA (addr8,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //SRA (addr8,Y)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)y;
-			else //SRA (addr8,X)
+				clocks -= 1;
+			}
+			else { //SRA (addr8,X)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
+				clocks -= 1;
+			}
 			cpu_op_sra(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
 			break;
 		case 0x68:
-			if (prefix == 0x91) //SLL ([shortptr.w],Y)
+			if(prefix == 0x91) { //SLL ([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x72) //SLL ([longptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x72) { //SLL ([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x92) //SLL ([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //SLL ([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //SLL (addr8,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //SLL (addr8,Y)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)y;
-			else //SLL (addr8,X)
+				clocks -= 1;
+			}
+			else { //SLL (addr8,X)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
+				clocks -= 1;
+			}
 			cpu_op_sll(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
 			break;
 		case 0x69:
-			if (prefix == 0x91) //RLC ([shortptr.w],Y)
+			if(prefix == 0x91) { //RLC ([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x72) //RLC ([longptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x72) { //RLC ([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x92) //RLC ([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //RLC ([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //RLC (addr8,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //RLC (addr8,Y)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)y;
-			else //RLC (addr8,X)
+				clocks -= 1;
+			}
+			else { //RLC (addr8,X)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
+				clocks -= 1;
+			}
 			cpu_op_rlc(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
 			break;
 		case 0x6A:
-			if (prefix == 0x91) //DEC ([shortptr.w],Y)
+			if(prefix == 0x91) { //DEC ([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x72) //DEC ([longptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x72) { //DEC ([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x92) //DEC ([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //DEC ([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //DEC (addr8,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //DEC (addr8,Y)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)y;
-			else //DEC (addr8,X)
+				clocks -= 1;
+			}
+			else { //DEC (addr8,X)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
+				clocks -= 1;
+			}
 			cpu_op_dec(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
@@ -1749,45 +2001,75 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0x6C:
-			if (prefix == 0x91) //INC ([shortptr.w],Y)
+			if(prefix == 0x91) { //INC ([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x72) //INC ([longptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x72) { //INC ([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x92) //INC ([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //INC ([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //INC (addr8,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //INC (addr8,Y)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)y;
-			else //INC (addr8,X)
+				clocks -= 1;
+			}
+			else { //INC (addr8,X)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
+				clocks -= 1;
+			}
 			cpu_op_inc(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
 			break;
 		case 0x6D:
-			if (prefix == 0x91) //TNZ ([shortptr.w],Y)
+			if(prefix == 0x91) { //TNZ ([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x72) //TNZ ([longptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x72) { //TNZ ([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x92) //TNZ ([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //TNZ ([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //TNZ (addr8,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //TNZ (addr8,Y)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)y;
-			else //TNZ (addr8,X)
+				clocks -= 1;
+			}
+			else { //TNZ (addr8,X)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
+				clocks -= 1;
+			}
 			cpu_flags_logic(memory_read(addr));
 			pc++;
 			break;
 		case 0x6E:
-			if (prefix == 0x91) //SWAP ([shortptr.w],Y)
+			if(prefix == 0x91) { //SWAP ([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x72) //SWAP ([longptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x72) { //SWAP ([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x92) //SWAP ([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //SWAP ([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //SWAP (addr8,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //SWAP (addr8,Y)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)y;
-			else //SWAP (addr8,X)
+				clocks -= 1;
+			}
+			else { //SWAP (addr8,X)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
+				clocks -= 1;
+			}
 			cpu_op_swap(memory_read(addr));
 			memory_write(addr, result);
 			pc++;
@@ -1940,7 +2222,7 @@ int32_t cpu_run(int32_t clocks) {
 			clocks -= 1;
 			pc++;
 			break;
-		case 0x80:
+		case 0x80: //IRET
 			cc = cpu_pop();
 			a = cpu_pop();
 			x = cpu_pop();
@@ -1960,13 +2242,11 @@ int32_t cpu_run(int32_t clocks) {
 			pc = cpu_pop();
 			pc <<= 8;
 			pc |= cpu_pop();
+			clocks -= 4;
 			break;
 		case 0x82: //INT
-			addr = memory_read(pc + 1);
-			addr <<= 8;
-			addr |= memory_read(pc + 2);
-			addr <<= 8;
-			addr |= memory_read(pc + 3);
+			addr = cpu_imm24();
+			clocks -= 2;
 			pc = addr;
 			break;
 		case 0x83: //TRAP
@@ -1985,6 +2265,7 @@ int32_t cpu_run(int32_t clocks) {
 			SET_COND(COND_I1);
 
 			//Transfer control to trap vector
+			clocks -= 9;
 			pc = 0x8004;
 			break;
 		case 0x84: //POP A
@@ -2002,6 +2283,7 @@ int32_t cpu_run(int32_t clocks) {
 				x <<= 8;
 				x |= cpu_pop();
 			}
+			clocks -= 2;
 			pc++;
 			break;
 		case 0x86: //POP CC
@@ -2014,6 +2296,7 @@ int32_t cpu_run(int32_t clocks) {
 			pc |= cpu_pop();
 			pc <<= 8;
 			pc |= cpu_pop();
+			clocks -= 5;
 			break;
 		case 0x88: //PUSH A
 			cpu_push(a);
@@ -2028,6 +2311,7 @@ int32_t cpu_run(int32_t clocks) {
 				cpu_push((uint8_t)x);
 				cpu_push((uint8_t)(x >> 8));
 			}
+			clocks -= 2;
 			pc++;
 			break;
 		case 0x8A: //PUSH CC
@@ -2044,20 +2328,11 @@ int32_t cpu_run(int32_t clocks) {
 			break;
 		case 0x8D:
 			if (prefix == 0x92) { //CALLF [longptr.e]
-				val16 = cpu_imm16();
-				addr = memory_read(val16++);
-				addr <<= 8;
-				addr |= memory_read(val16++);
-				addr <<= 8;
-				addr |= memory_read(val16);
+				addr = cpu_addr_longptr_ext();
 				clocks -= 8;
 			}
 			else { //CALLF addr24
-				addr = memory_read(++pc);
-				addr <<= 8;
-				addr |= memory_read(++pc);
-				addr <<= 8;
-				addr |= memory_read(++pc);
+				addr = cpu_imm24();
 				clocks -= 5;
 			}
 			pc++;
@@ -2070,10 +2345,12 @@ int32_t cpu_run(int32_t clocks) {
 			halt = 1;
 			CLEAR_COND(COND_I0);
 			SET_COND(COND_I1);
+			clocks -= 10;
 			pc++;
 			break;
 		case 0x8F:
 			if (prefix == 0x72) { //WFE
+				// No condition flags affected.
 			}
 			else { //WFI
 				CLEAR_COND(COND_I0);
@@ -2171,10 +2448,12 @@ int32_t cpu_run(int32_t clocks) {
 			if (prefix == 0x72) { //SUBW Y,#imm16
 				cpu_op_sub16(y, cpu_imm16());
 				y = result16;
+				clocks -= 2;
 			}
 			else { //SBC A,#imm8
 				cpu_op_sub(a, cpu_imm8() + GET_COND(COND_C));
 				a = result;
+				clocks -= 1;
 			}
 			pc++;
 			break;
@@ -2183,6 +2462,7 @@ int32_t cpu_run(int32_t clocks) {
 				cpu_op_sub16(y, cpu_imm16());
 			else //CPW X,#imm16
 				cpu_op_sub16(x, cpu_imm16());
+			clocks -= 2;
 			pc++;
 			break;
 		case 0xA4: //AND A,#imm8
@@ -2203,20 +2483,20 @@ int32_t cpu_run(int32_t clocks) {
 			break;
 		case 0xA7:
 			if (prefix == 0x91) { //LDF ([longptr.e],Y),A
-				addr = cpu_imm16();
-				addr = ((uint32_t)memory_read(addr) << 16) | ((uint32_t)memory_read(addr + 1) << 8) | (uint32_t)memory_read(addr);
-				addr += (uint32_t)y;
+				addr = cpu_addr_longptr_ext_indexed_y();
+				clocks -= 4;
 			}
 			else if (prefix == 0x92) { //LDF ([longptr.e],X),A
-				addr = cpu_imm16();
-				addr = ((uint32_t)memory_read(addr) << 16) | ((uint32_t)memory_read(addr + 1) << 8) | (uint32_t)memory_read(addr);
-				addr += (uint32_t)x;
+				addr = cpu_addr_longptr_ext_indexed_x();
+				clocks -= 4;
 			}
 			else if (prefix == 0x90) { //LDF (addr24,Y),A
 				addr = cpu_imm24() + (uint32_t)y;
+				clocks -= 1;
 			}
 			else { //LDF (addr24,X),A
 				addr = cpu_imm24() + (uint32_t)x;
+				clocks -= 1;
 			}
 			memory_write(addr, a);
 			cpu_flags_logic(a);
@@ -2252,21 +2532,13 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0xAC:
-			if (prefix == 0x92) {  //JPF [longptr.e]
-				addr = cpu_imm16();
-				pc = memory_read(addr);
-				pc <<= 8;
-				pc |= (uint32_t)memory_read(++addr);
-				pc <<= 8;
-				pc |= (uint32_t)memory_read(++addr);
+			if (prefix == 0x92) { //JPF [longptr.e]
+				addr = cpu_addr_longptr_ext();
+				pc = addr;
 				clocks -= 6;
 			}
 			else { //JPF addr24
-				addr = cpu_imm8();
-				addr <<= 8;
-				addr |= (uint32_t)cpu_imm8();
-				addr <<= 8;
-				addr |= (uint32_t)cpu_imm8();
+				addr = cpu_imm24();
 				pc = addr;
 				clocks -= 2;
 			}
@@ -2278,32 +2550,33 @@ int32_t cpu_run(int32_t clocks) {
 			clocks -= 4;
 			break;
 		case 0xAE:
-			if (prefix == 0x90) { //LD Y,#imm16
+			if (prefix == 0x90) { //LDW Y,#imm16
 				y = cpu_imm16();
 				cpu_flags_logic16(y);
 			}
-			else { //LD X,#imm16
+			else { //LDW X,#imm16
 				x = cpu_imm16();
 				cpu_flags_logic16(x);
 			}
+			clocks -= 2;
 			pc++;
 			break;
 		case 0xAF:
 			if (prefix == 0x91) { //LDF A,([longptr.e],Y)
-				addr = cpu_imm16();
-				addr = ((uint32_t)memory_read(addr) << 16) | ((uint32_t)memory_read(addr + 1) << 8) | (uint32_t)memory_read(addr);
-				addr += (uint32_t)y;
+				addr = cpu_addr_longptr_ext_indexed_y();
+				clocks -= 5;
 			}
 			else if (prefix == 0x92) { //LDF A,([longptr.e],X)
-				addr = cpu_imm16();
-				addr = ((uint32_t)memory_read(addr) << 16) | ((uint32_t)memory_read(addr + 1) << 8) | (uint32_t)memory_read(addr);
-				addr += (uint32_t)x;
+				addr = cpu_addr_longptr_ext_indexed_x();
+				clocks -= 5;
 			}
 			else if (prefix == 0x90) { //LDF A,(addr24,Y)
 				addr = cpu_imm24() + (uint32_t)y;
+				clocks -= 1;
 			}
 			else { //LDF A,(addr24,X)
 				addr = cpu_imm24() + (uint32_t)x;
+				clocks -= 1;
 			}
 			a = memory_read(addr);
 			cpu_flags_logic(a);
@@ -2314,11 +2587,13 @@ int32_t cpu_run(int32_t clocks) {
 				addr = cpu_imm16();
 				cpu_op_sub16(x, memory_read16(addr));
 				x = result16;
+				clocks -= 2;
 			}
 			else { //SUB A,addr8
 				addr = cpu_imm8();
 				cpu_op_sub(a, memory_read(addr));
 				a = result;
+				clocks -= 1;
 			}
 			pc++;
 			break;
@@ -2332,11 +2607,13 @@ int32_t cpu_run(int32_t clocks) {
 				addr = cpu_imm16();
 				cpu_op_sub16(y, memory_read16(addr));
 				y = result16;
+				clocks -= 2;
 			}
 			else { //SBC A,addr8
 				addr = cpu_imm8();
 				cpu_op_sub(a, memory_read(addr) + GET_COND(COND_C));
 				a = result;
+				clocks -= 1;
 			}
 			pc++;
 			break;
@@ -2345,6 +2622,7 @@ int32_t cpu_run(int32_t clocks) {
 				cpu_op_sub16(y, memory_read16(cpu_imm8()));
 			else //CPW X,addr8
 				cpu_op_sub16(x, memory_read16(cpu_imm8()));
+			clocks -= 2;
 			pc++;
 			break;
 		case 0xB4: //AND A,addr8
@@ -2408,11 +2686,12 @@ int32_t cpu_run(int32_t clocks) {
 			break;
 		case 0xBC:
 			if (prefix == 0x92) { //LDF A,[longptr.e]
-				addr = cpu_imm16();
-				addr = ((uint32_t)memory_read(addr) << 16) | ((uint32_t)memory_read(addr + 1) << 8) | (uint32_t)memory_read(addr);
+				addr = cpu_addr_longptr_ext();
+				clocks -= 5;
 			}
 			else { //LDF A,addr24
 				addr = cpu_imm24();
+				clocks -= 1;
 			}
 			a = memory_read(addr);
 			cpu_flags_logic(a);
@@ -2420,11 +2699,12 @@ int32_t cpu_run(int32_t clocks) {
 			break;
 		case 0xBD:
 			if (prefix == 0x92) { //LDF [longptr.e],A
-				addr = cpu_imm16();
-				addr = ((uint32_t)memory_read(addr) << 16) | ((uint32_t)memory_read(addr + 1) << 8) | (uint32_t)memory_read(addr);
+				addr = cpu_addr_longptr_ext();
+				clocks -= 4;
 			}
 			else { //LDF addr24,A
 				addr = cpu_imm24();
+				clocks -= 1;
 			}
 			memory_write(addr, a);
 			cpu_flags_logic(a);
@@ -2439,6 +2719,7 @@ int32_t cpu_run(int32_t clocks) {
 				x = memory_read16(cpu_imm8());
 				cpu_flags_logic16(x);
 			}
+			clocks -= 2;
 			pc++;
 			break;
 		case 0xBF:
@@ -2449,15 +2730,22 @@ int32_t cpu_run(int32_t clocks) {
 				val16 = x;
 			memory_write16(addr, val16);
 			cpu_flags_logic16(val16);
+			clocks -= 2;
 			pc++;
 			break;
 		case 0xC0:
-			if (prefix == 0x72) //SUB A,[longptr.w]
+			if(prefix == 0x72) { //SUB A,[longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //SUB A,[shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //SUB A,[shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //SUB A,addr16
+				clocks -= 4;
+			}
+			else { //SUB A,addr16
 				addr = cpu_imm16();
+				clocks -= 1;
+			}
 			cpu_op_sub(a, memory_read(addr));
 			a = result;
 			pc++;
@@ -2466,23 +2754,33 @@ int32_t cpu_run(int32_t clocks) {
 			if (prefix == 0x72) { //CP A,[longptr.w]
 				addr = cpu_addr_longptr();
 				val = memory_read(addr);
+				clocks -= 4;
 			}
 			else if (prefix == 0x92) { //CP A,[shortptr.w]
 				addr = cpu_addr_shortptr();
 				val = memory_read(addr);
+				clocks -= 4;
 			}
-			else //CP A,addr16
+			else { //CP A,addr16
 				val = memory_read(cpu_imm16());
+				clocks -= 1;
+			}
 			cpu_op_sub(a, val);
 			pc++;
 			break;
 		case 0xC2:
-			if (prefix == 0x72) //SBC A,[longptr.w]
+			if(prefix == 0x72) { //SBC A,[longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //SBC A,[shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //SBC A,[shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //SBC A,addr16
+				clocks -= 4;
+			}
+			else { //SBC A,addr16
 				addr = cpu_imm16();
+				clocks -= 1;
+			}
 			cpu_op_sub(a, memory_read(addr) + GET_COND(COND_C));
 			a = result;
 			pc++;
@@ -2491,22 +2789,27 @@ int32_t cpu_run(int32_t clocks) {
 			if (prefix == 0x91) { //CPW Y,[shortptr.w]
 				addr = cpu_addr_shortptr();
 				cpu_op_sub16(y, memory_read16(addr));
+				clocks -= 5;
 			}
 			else if (prefix == 0x90) { //CPW Y,addr16
 				addr = cpu_imm16();
 				cpu_op_sub16(y, memory_read16(addr));
+				clocks -= 2;
 			}
 			else if (prefix == 0x72) { //CPW X,[longptr.w]
 				addr = cpu_addr_longptr();
 				cpu_op_sub16(x, memory_read16(addr));
+				clocks -= 5;
 			}
 			else if (prefix == 0x92) { //CPW X,[shortptr.w]
 				addr = cpu_addr_shortptr();
 				cpu_op_sub16(x, memory_read16(addr));
+				clocks -= 5;
 			}
 			else { //CPW X,addr16
 				addr = cpu_imm16();
 				cpu_op_sub16(x, memory_read16(addr));
+				clocks -= 2;
 			}
 			pc++;
 			break;
@@ -2544,50 +2847,68 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0xC6:
-			if (prefix == 0x72) //LD A,[longptr.w]
+			if(prefix == 0x72) { //LD A,[longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) // LD A,[shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { // LD A,[shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //LD A,addr16
+				clocks -= 4;
+			}
+			else { //LD A,addr16
 				addr = cpu_imm16();
+				clocks -= 1;
+			}
 			a = memory_read(addr);
 			cpu_flags_logic(a);
 			pc++;
 			break;
 		case 0xC7:
-			if (prefix == 0x72) //LD [longptr.w],A
+			if(prefix == 0x72) { //LD [longptr.w],A
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //LD [shortptr.w],A
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //LD [shortptr.w],A
 				addr = cpu_addr_shortptr();
-			else //LD addr16,A
+				clocks -= 4;
+			}
+			else { //LD addr16,A
 				addr = cpu_imm16();
+				clocks -= 1;
+			}
 			memory_write(addr, a);
 			cpu_flags_logic(a);
 			pc++;
 			break;
 		case 0xC8:
-			if (prefix == 0x72) //XOR A,[longptr.w]
+			if(prefix == 0x72) { //XOR A,[longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //XOR A,[shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //XOR A,[shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //XOR A,addr16
+				clocks -= 4;
+			}
+			else { //XOR A,addr16
 				addr = cpu_imm16();
+				clocks -= 1;
+			}
 			cpu_op_xor(a, memory_read(addr));
 			a = result;
 			pc++;
 			break;
-		case 0xC9: //ADC A,(addr16)
-			if (prefix == 0x92) {
+		case 0xC9:
+			if (prefix == 0x92) { //ADC A,[shortptr.w]
 				addr = memory_read16(cpu_imm8());
 				cpu_op_add(a, memory_read(addr) + GET_COND(COND_C));
 				clocks -= 4;
 			}
-			else if (prefix == 0x72) {
+			else if (prefix == 0x72) { //ADC A,[longptr.w]
 				addr = memory_read16(cpu_imm16());
 				cpu_op_add(a, memory_read(addr) + GET_COND(COND_C));
 				clocks -= 4;
 			}
-			else {
+			else { //ADC A,addr16
 				cpu_op_add(a, memory_read(cpu_imm16()) + GET_COND(COND_C));
 				clocks -= 1;
 			}
@@ -2595,12 +2916,18 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0xCA:
-			if (prefix == 0x72) //OR A,[longptr.w]
+			if(prefix == 0x72) { //OR A,[longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //OR A,[shortptr.w]
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //OR A,[shortptr.w]
 				addr = cpu_addr_shortptr();
-			else //OR A,addr16
+				clocks -= 4;
+			}
+			else { //OR A,addr16
 				addr = cpu_imm16();
+				clocks -= 1;
+			}
 			val = memory_read(addr);
 			cpu_op_or(a, val);
 			a = result;
@@ -2622,12 +2949,18 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0xCC:
-			if (prefix == 0x72) //JP [longptr.w]
+			if(prefix == 0x72) { //JP [longptr.w]
 				addr = cpu_addr_longptr();
-			else if (prefix == 0x92) //JP [shortptr.w]
+				clocks -= 5;
+			}
+			else if(prefix == 0x92) { //JP [shortptr.w]
 				addr = cpu_addr_shortptr();
-			else
+				clocks -= 5;
+			}
+			else { //JP addr16
 				addr = cpu_imm16();
+				clocks -= 1;
+			}
 			pc = addr;
 			break;
 		case 0xCD:
@@ -2651,26 +2984,31 @@ int32_t cpu_run(int32_t clocks) {
 				addr = cpu_imm16();
 				y = memory_read16(addr);
 				cpu_flags_logic16(y);
+				clocks -= 2;
 			}
 			else if (prefix == 0x91) { //LDW Y,[shortptr.w]
 				addr = cpu_addr_shortptr();
 				y = memory_read16(addr);
 				cpu_flags_logic16(y);
+				clocks -= 5;
 			}
 			else if (prefix == 0x72) { //LDW X,[longptr.w]
 				addr = cpu_addr_longptr();
 				x = memory_read16(addr);
 				cpu_flags_logic16(x);
+				clocks -= 5;
 			}
 			else if (prefix == 0x92) { //LDW X,[shortptr.w]
 				addr = cpu_addr_shortptr();
 				x = memory_read16(addr);
 				cpu_flags_logic16(x);
+				clocks -= 5;
 			}
 			else { //LDW X,addr16
 				addr = cpu_imm16();
 				x = memory_read16(addr);
 				cpu_flags_logic16(x);
+				clocks -= 2;
 			}
 			pc++;
 			break;
@@ -2678,68 +3016,103 @@ int32_t cpu_run(int32_t clocks) {
 			if (prefix == 0x90) { //LDW addr16,Y
 				addr = cpu_imm16();
 				val16 = y;
+				clocks -= 2;
 			}
 			else if (prefix == 0x91) { //LDW [shortptr.w],Y
 				addr = cpu_addr_shortptr();
 				val16 = y;
+				clocks -= 5;
 			}
 			else if (prefix == 0x72) { //LDW [longptr.w],X
 				addr = cpu_addr_longptr();
 				val16 = x;
+				clocks -= 5;
 			}
 			else if (prefix == 0x92) { //LDW [shortptr.w],X
 				addr = cpu_addr_shortptr();
 				val16 = x;
+				clocks -= 5;
 			}
 			else { //LDW addr16,X
 				addr = cpu_imm16();
 				val16 = x;
+				clocks -= 2;
 			}
 			memory_write16(addr, val16);
 			cpu_flags_logic16(val16);
 			pc++;
 			break;
 		case 0xD0:
-			if (prefix == 0x91) //SUB A,([shortptr.w],Y)
+			if(prefix == 0x91) { //SUB A,([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x72) //SUB A,([longptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x72) { //SUB A,([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x92) //SUB A,([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //SUB A,([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //SUB A,(addr16,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //SUB A,(addr16,Y)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)y;
-			else //SUB A,(addr16,X)
+				clocks -= 1;
+			}
+			else { //SUB A,(addr16,X)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)x;
+				clocks -= 1;
+			}
 			cpu_op_sub(a, memory_read(addr));
 			a = result;
 			pc++;
 			break;
 		case 0xD1:
-			if (prefix == 0x91) //CP A,([shortptr.w],Y)
+			if (prefix == 0x91) { //CP A,([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x72) //CP A,([longptr.w],X)
+				clocks -= 4;
+			}
+			else if (prefix == 0x72) { //CP A,([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x92) //CP A,([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if (prefix == 0x92) { //CP A,([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //CP A,(addr16,Y)
+				clocks -= 4;
+			}
+			else if (prefix == 0x90) { //CP A,(addr16,Y)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)y;
-			else //CP A,(addr16,X)
+				clocks -= 1;
+			}
+			else { //CP A,(addr16,X)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)x;
+				clocks -= 1;
+			}
 			val = memory_read(addr);
 			cpu_op_sub(a, val);
 			pc++;
 			break;
 		case 0xD2:
-			if (prefix == 0x91) //SBC A,([shortptr.w],Y)
+			if(prefix == 0x91) { //SBC A,([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x72) //SBC A,([longptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x72) { //SBC A,([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x92) //SBC A,([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //SBC A,([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //SBC A,(addr16,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //SBC A,(addr16,Y)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)y;
-			else //SBC A,(addr16,X)
+				clocks -= 1;
+			}
+			else { //SBC A,(addr16,X)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)x;
+				clocks -= 1;
+			}
 			cpu_op_sub(a, memory_read(addr) + GET_COND(COND_C));
 			a = result;
 			pc++;
@@ -2748,22 +3121,27 @@ int32_t cpu_run(int32_t clocks) {
 			if (prefix == 0x72) { //CPW Y,([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
 				cpu_op_sub16(y, memory_read16(addr));
+				clocks -= 5;
 			}
 			else if (prefix == 0x92) { //CPW Y,([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
 				cpu_op_sub16(y, memory_read16(addr));
+				clocks -= 5;
 			}
 			else if (prefix == 0x91) { //CPW X,([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
 				cpu_op_sub16(x, memory_read16(addr));
+				clocks -= 5;
 			}
 			else if (prefix == 0x90) { //CPW X,(addr16,Y)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)y;
 				cpu_op_sub16(x, memory_read16(addr));
+				clocks -= 2;
 			}
 			else { //CPW Y,(addr16,X)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)x;
 				cpu_op_sub16(y, memory_read16(addr));
+				clocks -= 2;
 			}
 			pc++;
 			break;
@@ -2817,46 +3195,76 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0xD6:
-			if (prefix == 0x72) //LD A,([longptr.w],X)
+			if(prefix == 0x72) { //LD A,([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x91) //LD A,([shortptr.w],Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x91) { //LD A,([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x92) //LD A,([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //LD A,([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //LD A,(addr16,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //LD A,(addr16,Y)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)y;
-			else //LD A,(addr16,X)
+				clocks -= 1;
+			}
+			else { //LD A,(addr16,X)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)x;
+				clocks -= 1;
+			}
 			a = memory_read(addr);
 			cpu_flags_logic(a);
 			pc++;
 			break;
 		case 0xD7:
-			if (prefix == 0x72) //LD ([longptr.w],X),A
+			if(prefix == 0x72) { //LD ([longptr.w],X),A
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x91) //LD ([shortptr.w],Y),A
+				clocks -= 4;
+			}
+			else if(prefix == 0x91) { //LD ([shortptr.w],Y),A
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x92) //LD ([shortptr.w],X),A
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //LD ([shortptr.w],X),A
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //LD (addr16,Y),A
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //LD (addr16,Y),A
 				addr = (uint32_t)cpu_imm16() + (uint32_t)y;
-			else //LD (addr16,X),A
+				clocks -= 1;
+			}
+			else { //LD (addr16,X),A
 				addr = (uint32_t)cpu_imm16() + (uint32_t)x;
+				clocks -= 1;
+			}
 			memory_write(addr, a);
 			cpu_flags_logic(a);
 			pc++;
 			break;
 		case 0xD8:
-			if (prefix == 0x72) //XOR A,([longptr.w],X)
+			if(prefix == 0x72) { //XOR A,([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
-			else if (prefix == 0x91) //XOR A,([shortptr.w],Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x91) { //XOR A,([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
-			else if (prefix == 0x92) //XOR A,([shortptr.w],X)
+				clocks -= 4;
+			}
+			else if(prefix == 0x92) { //XOR A,([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
-			else if (prefix == 0x90) //XOR A,(addr16,Y)
+				clocks -= 4;
+			}
+			else if(prefix == 0x90) { //XOR A,(addr16,Y)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)y;
-			else //XOR A,(addr16,X)
+				clocks -= 1;
+			}
+			else { //XOR A,(addr16,X)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)x;
+				clocks -= 1;
+			}
 			cpu_op_xor(a, memory_read(addr));
 			a = result;
 			pc++;
@@ -2936,21 +3344,26 @@ int32_t cpu_run(int32_t clocks) {
 			a = result;
 			pc++;
 			break;
-		case 0xDC: //TODO: Am I doing this right?
-			if (prefix == 0x90) { //ADD A,(addr16,Y)
+		case 0xDC:
+			if (prefix == 0x90) { //JP (addr16,Y)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)y;
+				clocks -= 2;
 			}
-			else if (prefix == 0x91) { //ADD A,([shortptr.w],Y)
+			else if (prefix == 0x91) { //JP ([shortptr.w],Y)
 				addr = cpu_addr_shortptr_indexed_y();
+				clocks -= 5;
 			}
-			else if (prefix == 0x92) { //ADD A,([shortptr.w],X)
+			else if (prefix == 0x92) { //JP ([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
+				clocks -= 5;
 			}
-			else if (prefix == 0x72) { //ADD A,([longptr.w],X)
+			else if (prefix == 0x72) { //JP ([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
+				clocks -= 5;
 			}
-			else { //ADD A,(addr16,X)
+			else { //JP (addr16,X)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)x;
+				clocks -= 1;
 			}
 			pc = addr;
 			break;
@@ -2983,26 +3396,31 @@ int32_t cpu_run(int32_t clocks) {
 				addr = cpu_addr_shortptr_indexed_y();
 				y = memory_read16(addr);
 				cpu_flags_logic16(y);
+				clocks -= 5;
 			}
 			else if (prefix == 0x90) { //LDW Y,(addr16,Y)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)y;
 				y = memory_read16(addr);
 				cpu_flags_logic16(y);
+				clocks -= 2;
 			}
 			else if (prefix == 0x72) { //LDW X,([longptr.w],X)
 				addr = cpu_addr_longptr_indexed_x();
 				x = memory_read16(addr);
 				cpu_flags_logic16(x);
+				clocks -= 5;
 			}
 			else if (prefix == 0x92) { //LDW X,([shortptr.w],X)
 				addr = cpu_addr_shortptr_indexed_x();
 				x = memory_read16(addr);
 				cpu_flags_logic16(x);
+				clocks -= 5;
 			}
-			else { //LDW X(addr16,X)
+			else { //LDW X,(addr16,X)
 				addr = (uint32_t)cpu_imm16() + (uint32_t)x;
 				x = memory_read16(addr);
 				cpu_flags_logic16(x);
+				clocks -= 2;
 			}
 			pc++;
 			break;
@@ -3011,26 +3429,31 @@ int32_t cpu_run(int32_t clocks) {
 				addr = cpu_addr_shortptr_indexed_y();
 				memory_write16(addr, x);
 				cpu_flags_logic16(x);
+				clocks -= 5;
 			}
 			else if (prefix == 0x90) { //LDW (addr16,Y),X
 				addr = (uint32_t)cpu_imm16() + (uint32_t)y;
 				memory_write16(addr, x);
 				cpu_flags_logic16(x);
+				clocks -= 2;
 			}
 			else if (prefix == 0x72) { //LDW ([longptr.w],X),Y
 				addr = cpu_addr_longptr_indexed_x();
 				memory_write16(addr, y);
 				cpu_flags_logic16(y);
+				clocks -= 5;
 			}
 			else if (prefix == 0x92) { //LDW ([shortptr.w],X),Y
 				addr = cpu_addr_shortptr_indexed_x();
 				memory_write16(addr, y);
 				cpu_flags_logic16(y);
+				clocks -= 5;
 			}
 			else { //LDW (addr16,X),Y
 				addr = (uint32_t)cpu_imm16() + (uint32_t)x;
 				memory_write16(addr, y);
 				cpu_flags_logic16(y);
+				clocks -= 2;
 			}
 			pc++;
 			break;
@@ -3070,6 +3493,7 @@ int32_t cpu_run(int32_t clocks) {
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
 				cpu_op_sub16(y, memory_read16(addr));
 			}
+			clocks -= 2;
 			pc++;
 			break;
 		case 0xE4:
@@ -3119,12 +3543,12 @@ int32_t cpu_run(int32_t clocks) {
 			a = result;
 			pc++;
 			break;
-		case 0xE9: //ADC A,(addr8,X/Y)
-			if (prefix == 0x90) {
+		case 0xE9:
+			if (prefix == 0x90) { //ADC A,(addr8,Y)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)y;
 				cpu_op_add(a, memory_read(addr) + GET_COND(COND_C));
 			}
-			else {
+			else { //ADC A,(addr8,X)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
 				cpu_op_add(a, memory_read(addr) + GET_COND(COND_C));
 			}
@@ -3153,10 +3577,14 @@ int32_t cpu_run(int32_t clocks) {
 			pc++;
 			break;
 		case 0xEC:
-			if (prefix == 0x90) //JP (addr8,Y)
+			if(prefix == 0x90) { //JP (addr8,Y)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)y;
-			else //JP (addr8,X)
+				clocks -= 2;
+			}
+			else { //JP (addr8,X)
 				addr = (uint32_t)cpu_imm8() + (uint32_t)x;
+				clocks -= 1;
+			}
 			pc = addr;
 			break;
 		case 0xED:
@@ -3179,6 +3607,7 @@ int32_t cpu_run(int32_t clocks) {
 				x = memory_read16(addr);
 				cpu_flags_logic16(x);
 			}
+			clocks -= 2;
 			pc++;
 			break;
 		case 0xEF:
@@ -3192,6 +3621,7 @@ int32_t cpu_run(int32_t clocks) {
 				memory_write16(addr, y);
 				cpu_flags_logic16(y);
 			}
+			clocks -= 2;
 			pc++;
 			break;
 		case 0xF0:
@@ -3199,16 +3629,19 @@ int32_t cpu_run(int32_t clocks) {
 				addr = (uint32_t)cpu_imm8() + (uint32_t)sp;
 				cpu_op_sub16(x, memory_read16(addr));
 				x = result16;
+				clocks -= 2;
 			}
 			else if (prefix == 0x90) { //SUB A,(Y)
 				addr = cpu_addr_indexed_y();
 				cpu_op_sub(a, memory_read(addr));
 				a = result;
+				clocks -= 1;
 			}
 			else { //SUB A,(X)
 				addr = cpu_addr_indexed_x();
 				cpu_op_sub(a, memory_read(addr));
 				a = result;
+				clocks -= 1;
 			}
 			pc++;
 			break;
@@ -3225,16 +3658,19 @@ int32_t cpu_run(int32_t clocks) {
 				addr = (uint32_t)cpu_imm8() + (uint32_t)sp;
 				cpu_op_sub16(y, memory_read(addr));
 				y = result16;
+				clocks -= 2;
 			}
 			else if (prefix == 0x90) { //SBC A,(Y)
 				addr = cpu_addr_indexed_y();
 				cpu_op_sub(a, memory_read(addr) + GET_COND(COND_C));
 				a = result;
+				clocks -= 1;
 			}
 			else { //SBC A,(X)
 				addr = cpu_addr_indexed_x();
 				cpu_op_sub(a, memory_read(addr) + GET_COND(COND_C));
 				a = result;
+				clocks -= 1;
 			}
 			pc++;
 			break;
@@ -3243,6 +3679,7 @@ int32_t cpu_run(int32_t clocks) {
 				cpu_op_sub16(x, memory_read16(cpu_addr_indexed_y()));
 			else //CPW Y,(X)
 				cpu_op_sub16(y, memory_read16(cpu_addr_indexed_x()));
+			clocks -= 2;
 			pc++;
 			break;
 		case 0xF4:
@@ -3279,10 +3716,10 @@ int32_t cpu_run(int32_t clocks) {
 			cpu_flags_logic(a);
 			pc++;
 			break;
-		case 0xF8: //XOR A,(X/Y)
-			if (prefix == 0x90)
+		case 0xF8:
+			if (prefix == 0x90) //XOR A,(Y)
 				cpu_op_xor(a, memory_read(y));
-			else
+			else //XOR A,(X)
 				cpu_op_xor(a, memory_read(x));
 			a = result;
 			clocks -= 1;
@@ -3362,6 +3799,7 @@ int32_t cpu_run(int32_t clocks) {
 				x = val16;
 				cpu_flags_logic16(x);
 			}
+			clocks -= 2;
 			pc++;
 			break;
 		case 0xFF:
@@ -3373,6 +3811,7 @@ int32_t cpu_run(int32_t clocks) {
 				memory_write16(cpu_addr_indexed_x(), y);
 				cpu_flags_logic16(y);
 			}
+			clocks -= 2;
 			pc++;
 			break;
 		default:
@@ -3392,6 +3831,7 @@ int32_t cpu_run(int32_t clocks) {
 			running = 0;
 		}
 
+		// By default, assume unless otherwise already decremented, instructions take 1 clock cycle.
 		if (startclocks == clocks) clocks--; //TODO: Actual instruction timing...
 	}
 
