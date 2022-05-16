@@ -33,7 +33,7 @@ uint8_t irq_req[32], anyirq = 0;
 void cpu_reset() {
 	uint8_t i;
 
-	pc = 0x8000; //reset vector
+	pc = flash_start; //reset vector
 	sp = stack_top;
 	cc = COND_I0 | COND_I1;
 	halt = 0;
