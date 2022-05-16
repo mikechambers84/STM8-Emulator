@@ -35,6 +35,7 @@ extern uint32_t regaddr[REGISTERS_COUNT];
 
 uint8_t memory_read(uint32_t addr);
 uint16_t memory_read16(uint32_t addr);
+uint32_t memory_read24(uint32_t addr);
 void memory_write(uint32_t addr, uint8_t val);
 void memory_write16(uint32_t addr, uint16_t val);
 //int memory_register_watch(uint32_t addr, uint8_t accesstype);

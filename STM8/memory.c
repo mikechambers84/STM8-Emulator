@@ -148,8 +148,15 @@ uint8_t memory_read(uint32_t addr) {
 
 uint16_t memory_read16(uint32_t addr) {
 	uint16_t ret;
-	ret = ((uint16_t)memory_read(addr) << 8) | memory_read(addr + 1);
+	ret = ((uint16_t)memory_read(addr) << 8) | (uint16_t)memory_read(addr + 1);
 	//printf("memory_read16(0x%08X) = %04X\n", addr, ret);
+	return ret;
+}
+
+uint32_t memory_read24(uint32_t addr) {
+	uint32_t ret;
+	ret = ((uint32_t)memory_read(addr) << 16) | ((uint32_t)memory_read(addr + 1) << 8) | (uint32_t)memory_read(addr + 2);
+	//printf("memory_read24(0x%08X) = %06X\n", addr, ret);
 	return ret;
 }
 
