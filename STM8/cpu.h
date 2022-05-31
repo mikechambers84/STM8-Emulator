@@ -15,8 +15,6 @@
 #define CLEAR_COND(c)	cc &= ~c
 #define GET_COND(c)		((cc & c) ? 1 : 0)
 
-#define STACK_TOP	(RAM_START + RAM_SIZE - 1)
-
 #define CPU_IRQ_TLI				0
 #define CPU_IRQ_AWU				1
 #define CPU_IRQ_CLK				2

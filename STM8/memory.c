@@ -21,6 +21,8 @@ uint32_t regaddr[REGISTERS_COUNT];
 uint32_t flash_size = 0, ram_size = 0, eeprom_size = 0, io_size = 0, cpureg_size = 0;
 uint32_t flash_start = 0, ram_start = 0, eeprom_start = 0, io_start = 0, cpureg_start = 0;
 
+uint32_t stack_top = 0, stack_bottom = 0;
+
 uint32_t ports_start = 0, uart1_start = 0, uart3_start = 0, tim2_start = 0, adc_start = 0, clk_start = 0;
 uint32_t ports_end = 0, uart1_end = 0, uart3_end = 0, tim2_end = 0, adc_end = 0, clk_end = 0;
 

@@ -33,8 +33,8 @@ uint8_t irq_req[32], anyirq = 0;
 void cpu_reset() {
 	uint8_t i;
 
-	pc = 0x8000; //reset vector
-	sp = ram_start + ram_size - 1;
+	pc = flash_start; //reset vector
+	sp = stack_top;
 	cc = COND_I0 | COND_I1;
 	halt = 0;
 
@@ -55,14 +55,25 @@ FUNC_INLINE void cpu_push(uint8_t val) {
 	printf("Push %08X: %02X\n", sp, val);
 #endif
 	memory_write(sp, val);
-	if (sp == 0)
-		sp = ram_size - 1;
+	// Roll over SP to top of stack if it's at the bottom hardware-defined
+	// limit. Otherwise, if below that, the 16-bit SP register value wraps.
+	if(sp == stack_bottom)
+		sp = stack_top;
+	else if(sp == 0x0)
+		sp = 0xFFFF;
 	else
 		sp--;
 }
 
 FUNC_INLINE uint8_t cpu_pop() {
-	sp++;
+	// Roll over SP to bottom of stack if it's at the top. Otherwise, if beyond
+	// that, the 16-bit SP register value wraps.
+	if(sp == stack_top)
+		sp = stack_bottom;
+	else if(sp == 0xFFFF)
+		sp = 0x0;
+	else
+		sp++;
 #ifdef DEBUG_OUTPUT
 	printf("Pop %08X: %02X\n", sp, memory_read(sp));
 #endif
